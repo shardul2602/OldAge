@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Donations</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="header"><nav class="nav container">
+    <a href="/index.html">Home</a><a href="/donations.html">Donations</a><a href="/admin.html">Admin</a>
+  </nav></header>
+  <main class="container">
+    <section class="panel">
+      <h1 class="h1">Add Donation</h1>
+      <div class="grid cols-2">
+        <input class="input" id="d_name" placeholder="Donor Name" />
+        <input class="input" id="d_amount" type="number" placeholder="Amount" />
+        <select class="input" id="d_method">
+          <option value="cash">Cash</option>
+          <option value="bank">Bank</option>
+          <option value="online">Online</option>
+        </select>
+        <input class="input" id="d_notes" placeholder="Notes" />
+        <button class="btn primary" id="d_add">Add</button>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:12px">
+      <h2 class="h1">Summary</h2>
+      <div id="summary" class="h2">Loading...</div>
+    </section>
+
+    <section class="panel" style="margin-top:12px">
+      <h2 class="h1">Recent Donations</h2>
+      <table class="table" id="donTable">
+        <thead><tr><th>Donor</th><th>Amount</th><th>Method</th><th>Date</th><th>Notes</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="/js/app.js"></script>
+  <script>
+    async function loadDonations(){
+      const list = await api('/api/donations');
+      const tbody = $('#donTable tbody');
+      tbody.innerHTML = '';
+      list.forEach(d => {
+        const tr = document.createElement('tr');
+        const date = d.date ? new Date(d.date).toLocaleDateString() : '';
+        tr.innerHTML = `<td>${d.donorName}</td><td>${d.amount}</td><td>${d.method}</td><td>${date}</td><td>${d.notes||''}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    async function loadSummary(){
+      const s = await api('/api/donations/total');
+      $('#summary').textContent = `Total: Rs. ${s.total} | Count: ${s.count}`;
+    }
+    $('#d_add').addEventListener('click', async ()=>{
+      try{
+        const payload = { donorName: $('#d_name').value, amount: Number($('#d_amount').value||0), method: $('#d_method').value, notes: $('#d_notes').value };
+        await api('/api/donations',{ method:'POST', body: JSON.stringify(payload)});
+        toast('Donation added');
+        loadSummary();
+        loadDonations();
+      }catch(e){ toast('Add failed: '+e.message); }
+    });
+    loadSummary();
+    loadDonations();
+  </script>
+</body>
+</html>

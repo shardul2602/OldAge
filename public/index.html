@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Old Age Home Assistance - Home</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <nav class="nav between container">
+      <div class="nav-left">
+        <a href="/index.html">Home</a>
+        <a href="/admin.html">Admin Dashboard</a>
+        <a href="/residents.html">Resident Management</a>
+        <a href="/volunteer.html">Volunteer Dashboard</a>
+        <a href="/donations.html">Donations</a>
+      </div>
+      <div class="user-dropdown">
+        <a class="user-btn" href="#" id="userBtn" title="Account">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Z" stroke="currentColor" stroke-width="1.5"/><path d="M21 22a9 9 0 1 0-18 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </a>
+        <div class="menu" id="userMenu">
+          <a href="/login.html">Login</a>
+          <a href="/register.html">Register</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero fade-up">
+      <div class="panel">
+        <span class="badge">Care • Dignity • Support</span>
+        <h1 class="hero-title">Old Age Home Assistance</h1>
+        <p class="hero-sub">A simple system to manage residents, volunteers, visits, and donations — crafted for clarity and compassion.</p>
+        <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+          <a class="card" href="/residents.html"><strong>Manage Residents</strong><br/><span class="h2">Add, update and view profiles</span></a>
+          <a class="card" href="/volunteer.html"><strong>Volunteer Visits</strong><br/><span class="h2">Schedule and track outreach</span></a>
+          <a class="card" href="/donations.html"><strong>Donations</strong><br/><span class="h2">Record and view totals</span></a>
+        </div>
+      </div>
+      <div class="panel">
+        <h2 class="h1">Getting Started</h2>
+        <ul>
+          <li><a href="/register.html">Create an account</a> (Admin or Volunteer)</li>
+          <li><a href="/login.html">Login</a> and explore the dashboards</li>
+          <li>Use the navigation to move between modules</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="grid cols-2 fade-up" style="margin-top:18px">
+      <div class="panel">
+        <h2 class="h1">About Our Mission</h2>
+        <p class="h2">We support elders with compassionate care and reliable coordination.</p>
+        <p>Our mini-project demonstrates how a small team can manage residents, schedule volunteer visits, and keep track of donations with a clean and simple system.</p>
+      </div>
+      <div class="panel">
+        <h2 class="h1">How It Works</h2>
+        <ol>
+          <li>Admins register and add residents.</li>
+          <li>Volunteers register and schedule visits.</li>
+          <li>Donations are recorded and summarized.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="grid fade-up" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px">
+      <div class="card">
+        <strong>Resident Profiles</strong>
+        <div class="h2">Store health info, rooms, and emergency contacts.</div>
+      </div>
+      <div class="card">
+        <strong>Volunteer Visits</strong>
+        <div class="h2">Plan outreach, mark completion, add notes.</div>
+      </div>
+      <div class="card">
+        <strong>Donation Tracking</strong>
+        <div class="h2">Simple history with running totals.</div>
+      </div>
+    </section>
+
+    <section class="panel fade-up" style="margin-top:18px">
+      <h2 class="h1">Testimonials</h2>
+      <div class="grid cols-2">
+        <div class="card"><em>“The system keeps everything organized for our residents.”</em><br><span class="h2">— Admin</span></div>
+        <div class="card"><em>“Scheduling visits is so quick and we never miss follow-ups.”</em><br><span class="h2">— Volunteer</span></div>
+      </div>
+    </section>
+
+    <section class="panel fade-up" style="margin-top:18px;text-align:center">
+      <h2 class="h1">Ready to help?</h2>
+      <p class="h2">Create an account and start supporting elders today.</p>
+      <a class="btn primary" href="/register.html">Get Started</a>
+    </section>
+
+    <p class="footer">© Old Age Home Assistance</p>
+  </main>
+  <script src="/js/app.js"></script>
+</body>
+</html>
