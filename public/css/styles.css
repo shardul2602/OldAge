@@ -1,15 +1,24 @@
 :root{--bg:#0b1020;--bg-accent:#111936;--panel:#121826;--text:#f8fafc;--muted:#cbd5e1;--primary:#f59e0b;--primary-2:#f97316;--accent:#22c55e;--danger:#ef4444;--ring:#fde68a}
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:radial-gradient(1200px 600px at 10% -10%, #1b2a55 10%, transparent 60%), radial-gradient(1200px 600px at 110% 10%, #2a184e 10%, transparent 60%), linear-gradient(180deg,var(--bg),var(--bg-accent));background-attachment:fixed}
-.header{padding:18px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(10,14,28,.7);backdrop-filter:blur(6px);position:sticky;top:0;z-index:5}
-.nav{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.header{padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(10,14,28,.7);backdrop-filter:blur(6px);position:sticky;top:0;z-index:5}
+.nav{display:flex;gap:10px;flex-wrap:nowrap;align-items:center;min-height:72px}
 .between{justify-content:space-between}
+.nav-left{display:flex;align-items:center;gap:16px}
+.logo{height:72px;width:auto;display:block;flex:0 0 auto;margin-right:16px}
+
+/* Make header full-bleed so logo sits at far-left edge */
+.header .container{max-width:none;margin:0;padding-left:0;padding-right:16px}
+
+@media (max-width: 900px){
+  .logo{height:56px}
+}
 .nav a{position:relative;color:var(--muted);text-decoration:none;padding:8px 12px;border-radius:10px;transition:all .25s ease}
 .nav a::after{content:"";position:absolute;left:12px;right:12px;bottom:6px;height:2px;background:linear-gradient(90deg,var(--primary),var(--primary-2));transform:scaleX(0);transform-origin:left;transition:transform .25s ease}
 .nav a:hover{color:#fff;transform:translateY(-1px)}
 .nav a:hover::after{transform:scaleX(1)}
 
-.user-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;background:linear-gradient(180deg,#0f152a,#0b1222);border:1px solid rgba(255,255,255,.08);color:#fff;text-decoration:none;position:relative;overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,.25);transition:transform .12s ease, box-shadow .2s ease}
+.user-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;background:linear-gradient(180deg,#0f152a,#0b1222);border:1px solid rgba(255,255,255,.08);color:#fff;text-decoration:none;position:relative;overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,.25);transition:transform .12s ease, box-shadow .2s ease;vertical-align:middle}
 .user-btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(0,0,0,.35)}
 .user-btn svg{width:20px;height:20px;opacity:.9}
 .user-dropdown{position:relative}
@@ -51,3 +60,13 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetic
 .card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.3)}
 .fade-up{opacity:0;transform:translateY(12px);transition:opacity .6s ease, transform .6s ease}
 .fade-up.reveal{opacity:1;transform:translateY(0)}
+
+/* Vertical image rails on both sides */
+.rails{position:fixed;top:80px;bottom:0;width:90px;pointer-events:none;z-index:1;opacity:.7}
+.rails.left{left:4px}
+.rails.right{right:4px}
+.rail{position:absolute;top:0;bottom:0;left:0;right:0;overflow:hidden;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01))}
+.track{display:flex;flex-direction:column;gap:10px;animation:scrollUp 18s linear infinite}
+.rail img{width:100%;height:120px;object-fit:cover;border-radius:10px}
+@keyframes scrollUp{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
+@media (max-width: 980px){.rails{display:none}}

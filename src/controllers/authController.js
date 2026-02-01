@@ -78,3 +78,16 @@ async function googleUpsert(req, res) {
 }
 
 module.exports.googleUpsert = googleUpsert;
+
+async function exists(req, res) {
+  try {
+    const email = (req.query.email || req.body?.email || '').toLowerCase();
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+    const user = await User.findOne({ email });
+    return res.json({ exists: !!user });
+  } catch (err) {
+    return res.status(500).json({ message: 'Exists check failed', error: err.message });
+  }
+}
+
+module.exports.exists = exists;

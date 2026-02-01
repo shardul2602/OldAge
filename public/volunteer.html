@@ -56,6 +56,11 @@
     })();
 
     async function loadMyVisits(){
+      const user = JSON.parse(localStorage.getItem('currentUser')||'null');
+      if(!user || user.role !== 'volunteer'){
+        toast('Please sign in as a Volunteer to view visits.');
+        return;
+      }
       const volId = $('#volunteerId').value.trim();
       if(!volId) return toast('Enter your volunteer user ID');
       const list = await api('/api/visits?volunteer='+encodeURIComponent(volId));
@@ -77,6 +82,11 @@
 
     $('#scheduleBtn').addEventListener('click', async ()=>{
       try{
+        const user = JSON.parse(localStorage.getItem('currentUser')||'null');
+        if(!user || user.role !== 'volunteer'){
+          toast('Please sign in as a Volunteer to schedule visits.');
+          return;
+        }
         const dt = $('#visitDate').value ? new Date($('#visitDate').value).toISOString() : null;
         const payload = { resident: $('#residentId').value.trim(), volunteer: $('#volIdForSchedule').value.trim(), visitDate: dt, notes: $('#visitNotes').value };
         await api('/api/visits', { method:'POST', body: JSON.stringify(payload)});
