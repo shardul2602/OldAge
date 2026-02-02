@@ -39,10 +39,22 @@
           <option value="female">Female</option>
           <option value="other">Other</option>
         </select>
+        <select class="input" id="r_blood">
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+        </select>
+        <input class="input" id="r_admission" type="date" placeholder="Admission Date" />
         <input class="input" id="r_room" placeholder="Room Number" />
         <input class="input" id="r_ec_name" placeholder="Emergency Contact Name" />
         <input class="input" id="r_ec_phone" placeholder="Emergency Contact Phone" />
         <input class="input" id="r_health" placeholder="Health Conditions" />
+        <textarea class="input" id="r_history" placeholder="Medical History" rows="3"></textarea>
         <button class="btn primary" id="r_add">Add Resident</button>
       </div>
     </section>
@@ -50,7 +62,7 @@
     <section class="panel" style="margin-top:12px">
       <h2 class="h1">Residents</h2>
       <table class="table" id="resTable">
-        <thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Room</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Blood</th><th>Admission</th><th>Room</th><th>Actions</th></tr></thead>
         <tbody></tbody>
       </table>
     </section>
@@ -63,7 +75,8 @@
       tbody.innerHTML = '';
       data.forEach(r => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${r.name}</td><td>${r.age||''}</td><td>${r.gender||''}</td><td>${r.roomNumber||''}</td>
+        const adm = r.admissionDate ? new Date(r.admissionDate).toLocaleDateString() : '';
+        tr.innerHTML = `<td>${r.name}</td><td>${r.age||''}</td><td>${r.gender||''}</td><td>${r.bloodGroup||''}</td><td>${adm}</td><td>${r.roomNumber||''}</td>
           <td>
             <button class="btn" data-edit="${r._id}">Edit</button>
             <button class="btn danger" data-del="${r._id}">Delete</button>
@@ -78,6 +91,9 @@
           name: $('#r_name').value,
           age: Number($('#r_age').value||0),
           gender: $('#r_gender').value,
+          bloodGroup: $('#r_blood').value,
+          medicalHistory: $('#r_history').value,
+          admissionDate: $('#r_admission').value ? new Date($('#r_admission').value).toISOString() : undefined,
           roomNumber: $('#r_room').value,
           healthConditions: $('#r_health').value,
           emergencyContact: { name: $('#r_ec_name').value, phone: $('#r_ec_phone').value }

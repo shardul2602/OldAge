@@ -6,6 +6,8 @@ const residentSchema = new mongoose.Schema(
     age: { type: Number, required: true, min: 0 },
     gender: { type: String, enum: ['male', 'female', 'other'], required: true },
     admissionDate: { type: Date, default: Date.now },
+    bloodGroup: { type: String, enum: ['A+','A-','B+','B-','AB+','AB-','O+','O-'], default: 'O+' },
+    medicalHistory: { type: String, default: '' },
     healthConditions: { type: String, default: '' },
     emergencyContact: {
       name: { type: String, required: true },
