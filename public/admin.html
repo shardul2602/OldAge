@@ -7,9 +7,27 @@
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
-  <header class="header"><nav class="nav container">
-    <a href="/index.html">Home</a><a href="/admin.html">Admin</a><a href="/residents.html">Residents</a><a href="/donations.html">Donations</a>
-  </nav></header>
+  <header class="header">
+    <nav class="nav between container">
+      <div class="nav-left">
+        <img class="logo" src="/careconnectlogo.png" alt="CareConnect" />
+        <a href="/index.html">Home</a>
+        <a href="/admin.html">Admin Dashboard</a>
+        <a href="/residents.html">Resident Management</a>
+        <a href="/volunteer.html">Volunteer Dashboard</a>
+        <a href="/donations.html">Donations</a>
+      </div>
+      <div class="user-dropdown">
+        <a class="user-btn" href="#" id="userBtn" title="Account">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Z" stroke="currentColor" stroke-width="1.5"/><path d="M21 22a9 9 0 1 0-18 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </a>
+        <div class="menu" id="userMenu">
+          <a href="/login.html">Login</a>
+          <a href="/register.html">Register</a>
+        </div>
+      </div>
+    </nav>
+  </header>
   <main class="container">
     <section class="panel">
       <h1 class="h1">Admin Demo </h1>
