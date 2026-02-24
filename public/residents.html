@@ -29,7 +29,7 @@
     </nav>
   </header>
   <main class="container">
-    <section class="panel">
+    <section class="panel" id="addResidentSection" style="display:none">
       <h1 class="h1">Add Resident</h1>
       <div class="grid cols-2">
         <input class="input" id="r_name" placeholder="Name" />
@@ -58,6 +58,16 @@
         <button class="btn primary" id="r_add">Add Resident</button>
       </div>
     </section>
+
+    <script>
+      // Show Add Resident only for admins
+      try{
+        const u = JSON.parse(localStorage.getItem('currentUser')||'null');
+        if(u && u.role === 'admin'){
+          document.getElementById('addResidentSection').style.display = 'block';
+        }
+      }catch{}
+    </script>
 
     <section class="panel" style="margin-top:12px">
       <h2 class="h1">Residents</h2>
