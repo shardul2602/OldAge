@@ -33,10 +33,10 @@
     <section class="panel">
       <h1 class="h1">Gallery</h1>
       <div id="adminControls" style="display:none; margin-bottom:16px">
-        <input class="input" id="imgUrl" placeholder="Image URL" style="width:300px" />
-        <button class="btn primary" id="addImg">Add Image</button>
+        <input type="file" id="imgFile" accept="image/*" style="margin-right:8px" />
+        <button class="btn primary" id="addImg">Upload Image</button>
       </div>
-      <div class="grid cols-3" id="galleryGrid"></div>
+      <div class="grid" id="galleryGrid" style="display:flex; flex-direction:column; gap:12px"></div>
     </section>
   </main>
   <script src="/js/app.js"></script>
@@ -54,18 +54,28 @@
     let images = [];
 
     async function loadGallery(){
+      console.log('loadGallery started');
       try {
         const res = await api('/api/gallery');
-        images = Array.isArray(res) ? res : defaultImages;
-      } catch {
+        console.log('API response:', res);
+        if(Array.isArray(res) && res.length > 0){
+          images = res;
+        } else {
+          images = defaultImages;
+          console.log('Using default images because API returned empty or non-array');
+        }
+      } catch (err) {
+        console.error('Gallery API failed, using defaults:', err);
         images = defaultImages;
       }
+      console.log('Final images array:', images);
       renderGallery();
     }
 
     function renderGallery(){
       const grid = document.getElementById('galleryGrid');
       grid.innerHTML = '';
+      console.log('renderGallery called with', images);
       images.forEach((src, idx) => {
         const div = document.createElement('div');
         div.className = 'card';
@@ -91,14 +101,21 @@
 
     // Add image
     document.getElementById('addImg').addEventListener('click', async ()=>{
-      const url = document.getElementById('imgUrl').value.trim();
-      if(!url){ toast('Enter image URL'); return; }
+      const fileInput = document.getElementById('imgFile');
+      const file = fileInput.files[0];
+      if(!file){ toast('Select an image file'); return; }
+      const formData = new FormData();
+      formData.append('image', file);
       try {
-        await api('/api/gallery', { method:'POST', body: JSON.stringify({ url }) });
-        toast('Image added');
-        document.getElementById('imgUrl').value = '';
+        const res = await fetch('/api/gallery/upload', {
+          method: 'POST',
+          body: formData,
+          headers: { 'x-user-id': JSON.parse(localStorage.getItem('currentUser')||'{}')._id }
+        });
+        if(!res.ok) throw new Error('Upload failed');
+        toast('Image uploaded');
         loadGallery();
-      } catch(e){ toast('Add failed: '+e.message); }
+      } catch(e){ toast('Upload error: '+e.message); }
     });
 
     // Delete image
@@ -116,6 +133,13 @@
     });
 
     loadGallery();
+
+    // Simple test: add a placeholder image directly
+    const grid = document.getElementById('galleryGrid');
+    if(grid && grid.children.length === 0){
+      grid.innerHTML = '<div class="card"><img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop" alt="Test" style="width:100%;border-radius:8px" /></div>';
+      console.log('Fallback test image added');
+    }
   </script>
 </body>
 </html>

@@ -17,6 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(express.static('public'));
+app.use('/api/gallery/upload', express.raw({ type: 'image/*', limit: 10 * 1024 * 1024 }));
 app.use(attachUser);
 
 // Routes (Step 4)
