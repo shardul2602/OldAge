@@ -16,6 +16,7 @@
         <a href="/residents.html">Resident Management</a>
         <a href="/volunteer.html">Volunteer Dashboard</a>
         <a href="/donations.html">Donations</a>
+        <a href="/gallery.html">Gallery</a>
       </div>
       <div class="user-dropdown">
         <a class="user-btn" href="#" id="userBtn" title="Account">
@@ -29,6 +30,16 @@
     </nav>
   </header>
   <main class="container">
+    <script>
+      // Hide entire page content for volunteers
+      try{
+        const u = JSON.parse(localStorage.getItem('currentUser')||'null');
+        if(u && u.role !== 'admin'){
+          document.querySelector('main').style.display = 'none';
+          document.body.innerHTML = '<div class="container" style="text-align:center;margin-top:100px"><h1 class="h1">Access Denied</h1><p class="h2">Admins only</p></div>';
+        }
+      }catch{}
+    </script>
     <section class="panel">
       <h1 class="h1">Admin Demo </h1>
       <p class="h2">Quick links</p>

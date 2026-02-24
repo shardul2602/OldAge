@@ -63,6 +63,7 @@ document.addEventListener('click', (e)=>{
 // Global: auth-aware menu (Login/Register vs Logged-in/Copy ID/Logout)
 document.addEventListener('DOMContentLoaded', () => {
   const menu = document.getElementById('userMenu');
+  const adminLink = document.getElementById('adminLink');
   if(!menu) return;
   let user = null;
   try{ user = JSON.parse(localStorage.getItem('currentUser')||'null'); }catch{}
@@ -85,5 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
       toast('Logged out');
       location.href = '/index.html';
     });
+  }
+  // Hide Admin Dashboard link for volunteers
+  if(adminLink){
+    if(!user || user.role !== 'admin'){
+      adminLink.style.display = 'none';
+    } else {
+      adminLink.style.display = '';
+    }
   }
 });

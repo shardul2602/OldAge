@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gallery</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <nav class="nav between container">
+      <div class="nav-left">
+        <img class="logo" src="/careconnectlogo.png" alt="CareConnect" />
+        <a href="/index.html">Home</a>
+        <a href="/admin.html" id="adminLink">Admin Dashboard</a>
+        <a href="/residents.html">Resident Management</a>
+        <a href="/volunteer.html">Volunteer Dashboard</a>
+        <a href="/donations.html">Donations</a>
+        <a href="/gallery.html">Gallery</a>
+      </div>
+      <div class="user-dropdown">
+        <a class="user-btn" href="#" id="userBtn" title="Account">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Z" stroke="currentColor" stroke-width="1.5"/><path d="M21 22a9 9 0 1 0-18 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </a>
+        <div class="menu" id="userMenu">
+          <a href="/login.html">Login</a>
+          <a href="/register.html">Register</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+  <main class="container">
+    <section class="panel">
+      <h1 class="h1">Gallery</h1>
+      <div id="adminControls" style="display:none; margin-bottom:16px">
+        <input class="input" id="imgUrl" placeholder="Image URL" style="width:300px" />
+        <button class="btn primary" id="addImg">Add Image</button>
+      </div>
+      <div class="grid cols-3" id="galleryGrid"></div>
+    </section>
+  </main>
+  <script src="/js/app.js"></script>
+  <script>
+    // Default stock images
+    const defaultImages = [
+      'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1545167622-3a6ac756afa4?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1576319155655-9a14c83023b5?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop'
+    ];
+
+    let images = [];
+
+    async function loadGallery(){
+      try {
+        const res = await api('/api/gallery');
+        images = Array.isArray(res) ? res : defaultImages;
+      } catch {
+        images = defaultImages;
+      }
+      renderGallery();
+    }
+
+    function renderGallery(){
+      const grid = document.getElementById('galleryGrid');
+      grid.innerHTML = '';
+      images.forEach((src, idx) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <img src="${src}" alt="Gallery image ${idx+1}" style="width:100%; border-radius:8px" />
+          ${isAdmin() ? `<button class="btn danger" style="margin-top:8px" data-del="${idx}">Delete</button>` : ''}
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function isAdmin(){
+      try {
+        const u = JSON.parse(localStorage.getItem('currentUser')||'null');
+        return u && u.role === 'admin';
+      } catch { return false; }
+    }
+
+    // Show admin controls if admin
+    if(isAdmin()){
+      document.getElementById('adminControls').style.display = 'block';
+    }
+
+    // Add image
+    document.getElementById('addImg').addEventListener('click', async ()=>{
+      const url = document.getElementById('imgUrl').value.trim();
+      if(!url){ toast('Enter image URL'); return; }
+      try {
+        await api('/api/gallery', { method:'POST', body: JSON.stringify({ url }) });
+        toast('Image added');
+        document.getElementById('imgUrl').value = '';
+        loadGallery();
+      } catch(e){ toast('Add failed: '+e.message); }
+    });
+
+    // Delete image
+    document.getElementById('galleryGrid').addEventListener('click', async (e)=>{
+      const idx = e.target.getAttribute('data-del');
+      if(idx!=null){
+        if(confirm('Delete this image?')){
+          try {
+            await api('/api/gallery/'+idx, { method:'DELETE' });
+            toast('Deleted');
+            loadGallery();
+          } catch(err){ toast('Delete failed: '+err.message); }
+        }
+      }
+    });
+
+    loadGallery();
+  </script>
+</body>
+</html>

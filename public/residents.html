@@ -12,10 +12,11 @@
       <div class="nav-left">
         <img class="logo" src="/careconnectlogo.png" alt="CareConnect" />
         <a href="/index.html">Home</a>
-        <a href="/admin.html">Admin Dashboard</a>
+        <a href="/admin.html" id="adminLink">Admin Dashboard</a>
         <a href="/residents.html">Resident Management</a>
         <a href="/volunteer.html">Volunteer Dashboard</a>
         <a href="/donations.html">Donations</a>
+        <a href="/gallery.html">Gallery</a>
       </div>
       <div class="user-dropdown">
         <a class="user-btn" href="#" id="userBtn" title="Account">
@@ -66,13 +67,18 @@
         if(u && u.role === 'admin'){
           document.getElementById('addResidentSection').style.display = 'block';
         }
+        // Hide Admin Dashboard link for volunteers
+        const adminLink = document.getElementById('adminLink');
+        if(adminLink && (!u || u.role !== 'admin')){
+          adminLink.style.display = 'none';
+        }
       }catch{}
     </script>
 
     <section class="panel" style="margin-top:12px">
       <h2 class="h1">Residents</h2>
       <table class="table" id="resTable">
-        <thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Blood</th><th>Admission</th><th>Room</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Actions</th></tr></thead>
         <tbody></tbody>
       </table>
     </section>
@@ -83,14 +89,16 @@
       const data = await api('/api/residents');
       const tbody = $('#resTable tbody');
       tbody.innerHTML = '';
+      const isAdmin = (() => {
+        try { const u = JSON.parse(localStorage.getItem('currentUser')||'null'); return u && u.role === 'admin'; } catch { return false; }
+      })();
       data.forEach(r => {
         const tr = document.createElement('tr');
         const adm = r.admissionDate ? new Date(r.admissionDate).toLocaleDateString() : '';
-        tr.innerHTML = `<td>${r.name}</td><td>${r.age||''}</td><td>${r.gender||''}</td><td>${r.bloodGroup||''}</td><td>${adm}</td><td>${r.roomNumber||''}</td>
-          <td>
-            <button class="btn" data-edit="${r._id}">Edit</button>
-            <button class="btn danger" data-del="${r._id}">Delete</button>
-          </td>`;
+        const actions = isAdmin
+          ? `<button class="btn" data-view="${r._id}">View Profile</button><button class="btn" data-edit="${r._id}">Edit Room</button><button class="btn danger" data-del="${r._id}">Delete</button>`
+          : `<button class="btn" data-view="${r._id}">View Profile</button>`;
+        tr.innerHTML = `<td>${r.name}</td><td>${r.age||''}</td><td>${r.gender||''}</td><td>${actions}</td>`;
         tbody.appendChild(tr);
       });
     }
@@ -117,6 +125,7 @@
     $('#resTable').addEventListener('click', async (e)=>{
       const idDel = e.target.getAttribute('data-del');
       const idEdit = e.target.getAttribute('data-edit');
+      const idView = e.target.getAttribute('data-view');
       if(idDel){
         if(confirm('Delete this resident?')){
           try{ await api('/api/residents/'+idDel,{ method:'DELETE'}); toast('Deleted'); loadResidents(); }catch(err){ toast('Delete failed: '+err.message); }
@@ -126,6 +135,29 @@
         if(room!=null){
           try{ await api('/api/residents/'+idEdit,{ method:'PUT', body: JSON.stringify({ roomNumber: room })}); toast('Updated'); loadResidents(); }catch(err){ toast('Update failed: '+err.message); }
         }
+      } else if(idView){
+        try{
+          const r = await api('/api/residents/'+idView);
+          const adm = r.admissionDate ? new Date(r.admissionDate).toLocaleDateString() : '';
+          const popup = document.createElement('div');
+          popup.className = 'modal-overlay';
+          popup.innerHTML = `
+            <div class="modal">
+              <h2 class="h2">Resident Profile</h2>
+              <p><strong>Name:</strong> ${r.name}</p>
+              <p><strong>Age:</strong> ${r.age||''}</p>
+              <p><strong>Gender:</strong> ${r.gender||''}</p>
+              <p><strong>Blood Group:</strong> ${r.bloodGroup||''}</p>
+              <p><strong>Admission Date:</strong> ${adm}</p>
+              <p><strong>Room:</strong> ${r.roomNumber||''}</p>
+              <p><strong>Health Conditions:</strong> ${r.healthConditions||''}</p>
+              <p><strong>Medical History:</strong> ${r.medicalHistory||''}</p>
+              <p><strong>Emergency Contact:</strong> ${r.emergencyContact?.name||''} (${r.emergencyContact?.phone||''})</p>
+              <button class="btn primary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+            </div>
+          `;
+          document.body.appendChild(popup);
+        }catch(err){ toast('Failed to load profile: '+err.message); }
       }
     });
 
