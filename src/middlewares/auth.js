@@ -4,8 +4,12 @@ async function attachUser(req, res, next) {
   try {
     const id = req.header('x-user-id');
     if (id) {
-      const user = await User.findById(id).select('-password');
-      if (user) req.user = user;
+      const user = await User.findById(id).select('-password').populate('homeId', 'name address contact');
+      if (user) {
+        req.user = user;
+        req.homeIds = user.homeId.map(h => h._id || h);
+        req.homeId = user.homeId[0]?._id || user.homeId[0]; // Primary home for compatibility
+      }
     }
   } catch (_) {}
   next();

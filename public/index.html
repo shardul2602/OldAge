@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Old Age Home Assistance - Home</title>
+  <link rel="icon" type="image/png" href="/careconnectlogo.png" />
   <link rel="stylesheet" href="/css/styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,42 +56,41 @@
   <div class="rails right">
     <div class="rail">
       <div class="track">
-        <img src="rail1.png" alt="support" />
-        <img src="rail2.png" alt="support" />
-        <img src="rail3.png" alt="support" />
-        <img src="rail4.png" alt="support" />
-        <img src="rail5.png" alt="support" />
         <img src="rail6.png" alt="support" />
+        <img src="rail5.png" alt="support" />
+        <img src="rail4.png" alt="support" />
+        <img src="rail3.png" alt="support" />
+        <img src="rail2.png" alt="support" />
+        <img src="rail1.png" alt="support" />
         <!-- duplicate for seamless loop -->
-        <img src="rail1.png" alt="support" />
-        <img src="rail2.png" alt="support" />
-        <img src="rail3.png" alt="support" />
-        <img src="rail4.png" alt="support" />
-        <img src="rail5.png" alt="support" />
         <img src="rail6.png" alt="support" />
+        <img src="rail5.png" alt="support" />
+        <img src="rail4.png" alt="support" />
+        <img src="rail3.png" alt="support" />
+        <img src="rail2.png" alt="support" />
+        <img src="rail1.png" alt="support" />
       </div>
     </div>
   </div>
 
-  <main class="container">
+
+  
+  <main class="container rail-gap">
     <section class="hero fade-up">
       <div class="panel">
         <span class="badge">Care • Dignity • Support</span>
         <h1 class="hero-title font-display">Old Age Home Assistance</h1>
         <p class="hero-sub">A simple system to manage residents, volunteers, visits, and donations — crafted for clarity and compassion.</p>
         <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
-          <a class="card" href="/residents.html"><strong>Manage Residents</strong><br/><span class="h2">Add, update and view profiles</span></a>
-          <a class="card" href="/volunteer.html"><strong>Volunteer Visits</strong><br/><span class="h2">Schedule and track outreach</span></a>
-          <a class="card" href="/donations.html"><strong>Donations</strong><br/><span class="h2">Record and view totals</span></a>
+          <button class="btn primary" onclick="window.location.href='/residents.html'">Manage Residents</button>
+          <button class="btn primary" onclick="window.location.href='/volunteer.html'">Volunteer Visits</button>
+          <button class="btn primary" onclick="window.location.href='/donations.html'">Donations</button>
         </div>
       </div>
       <div class="panel">
-        <h2 class="h1">Getting Started</h2>
-        <ul>
-          <li><a href="/register.html">Create an account</a> (Admin or Volunteer)</li>
-          <li><a href="/login.html">Login</a> and explore the dashboards</li>
-          <li>Use the navigation to move between modules</li>
-        </ul>
+        <h2 class="h1 font-display">Our Impact</h2>
+        <p class="h2">Empowering elders with dignity and care through coordinated support.</p>
+        <p>Join our community to make a meaningful difference in the lives of seniors.</p>
       </div>
     </section>
 
@@ -131,6 +131,9 @@
         <div class="card"><em class="font-serif">“The system keeps everything organized for our residents.”</em><br><span class="h2">— Admin</span></div>
         <div class="card"><em class="font-serif">“Scheduling visits is so quick and we never miss follow-ups.”</em><br><span class="h2">— Volunteer</span></div>
       </div>
+      <div style="margin-top:16px; text-align:center">
+        <button class="btn primary" id="writeReviewBtn">Write a Review</button>
+      </div>
     </section>
 
     <section class="panel fade-up" style="margin-top:18px;text-align:center">
@@ -141,6 +144,19 @@
 
     <p class="footer">© Old Age Home Assistance</p>
   </main>
-  <script src="/js/app.js"></script>
+  <script src="/js/app.js?t=456"></script>
+  <script>
+    document.getElementById('writeReviewBtn').addEventListener('click', () => {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      if (!currentUser._id) {
+        toast('Please login to write a review');
+        return;
+      }
+      const review = prompt('Write your review:');
+      if (review && review.trim()) {
+        toast('Thank you for your review!');
+      }
+    });
+  </script>
 </body>
 </html>
