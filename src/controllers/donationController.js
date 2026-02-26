@@ -7,7 +7,7 @@ async function addDonation(req, res) {
     if (!donorName || amount == null) {
       return res.status(400).json({ message: 'donorName and amount are required' });
     }
-    const donation = await Donation.create({ donorName, amount, method, date, notes });
+    const donation = await Donation.create({ donorName, amount, method, date, notes, homeId: req.homeId });
     return res.status(201).json({ message: 'Donation added', donation });
   } catch (err) {
     return res.status(400).json({ message: 'Add donation failed', error: err.message });
@@ -17,7 +17,7 @@ async function addDonation(req, res) {
 // List donations (most recent first)
 async function listDonations(req, res) {
   try {
-    const list = await Donation.find().sort({ createdAt: -1 });
+    const list = await Donation.find({ homeId: { $in: req.homeIds } }).sort({ createdAt: -1 });
     return res.json(list);
   } catch (err) {
     return res.status(500).json({ message: 'Fetch donations failed', error: err.message });
@@ -28,6 +28,7 @@ async function listDonations(req, res) {
 async function getTotal(req, res) {
   try {
     const result = await Donation.aggregate([
+      { $match: { homeId: { $in: req.homeIds } } },
       { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }
     ]);
     const summary = result[0] || { total: 0, count: 0 };

@@ -19,7 +19,7 @@ exports.uploadImage = async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const publicUrl = `/uploads/${req.file.filename}`;
     const Gallery = require('../models/Gallery');
-    const newImage = new Gallery({ url: publicUrl });
+    const newImage = new Gallery({ url: publicUrl, homeId: req.homeId });
     await newImage.save();
     res.status(201).json(newImage);
   } catch (err) {

@@ -7,6 +7,7 @@ const residentRoutes = require('./src/routes/residentRoutes');
 const visitRoutes = require('./src/routes/visitRoutes');
 const donationRoutes = require('./src/routes/donationRoutes');
 const galleryRoutes = require('./src/routes/galleryRoutes');
+const homeRoutes = require('./src/routes/homeRoutes');
 const path = require('path');
 const { attachUser } = require('./src/middlewares/auth');
 
@@ -26,6 +27,7 @@ app.use('/api/residents', residentRoutes);
 app.use('/api/visits', visitRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/homes', homeRoutes);
 
 // Basic routes for Step 1
 app.get('/', (req, res) => {

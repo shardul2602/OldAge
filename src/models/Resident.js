@@ -14,7 +14,8 @@ const residentSchema = new mongoose.Schema(
       phone: { type: String, required: true }
     },
     roomNumber: { type: String, default: '' },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    homeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Home', required: true }
   },
   { timestamps: true }
 );
