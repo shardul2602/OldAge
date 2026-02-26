@@ -7,7 +7,7 @@ async function createVisit(req, res) {
     if (!resident || !volunteer || !visitDate) {
       return res.status(400).json({ message: 'resident, volunteer and visitDate are required' });
     }
-    const visit = await Visit.create({ resident, volunteer, visitDate, status, notes, homeId: req.homeId });
+    const visit = await Visit.create({ resident, volunteer, visitDate, status, notes, homeId: req.homeIds[0] });
     return res.status(201).json({ message: 'Visit scheduled', visit });
   } catch (err) {
     return res.status(400).json({ message: 'Create visit failed', error: err.message });
