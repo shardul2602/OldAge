@@ -83,13 +83,10 @@
       </table>
     </section>
   </main>
-  <script src="/js/app.js?t=456"></script>
+  <script src="/js/app.js?t=789"></script>
   <script>
     async function loadResidents(){
-      const selectedHome = localStorage.getItem('selectedHome');
-      console.log('Loading residents for home:', selectedHome); // Debug
       const data = await api('/api/residents');
-      console.log('Residents returned:', data.length, data.map(r => ({name: r.name, homeId: r.homeId}))); // Debug
       const tbody = $('#resTable tbody');
       tbody.innerHTML = '';
       const isAdmin = (() => {
