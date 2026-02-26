@@ -3,7 +3,7 @@ const Resident = require('../models/Resident');
 // Create resident
 async function createResident(req, res) {
   try {
-    const resident = await Resident.create(req.body);
+    const resident = await Resident.create({ ...req.body, homeId: req.homeIds[0] });
     return res.status(201).json({ message: 'Resident created', resident });
   } catch (err) {
     return res.status(400).json({ message: 'Create failed', error: err.message });
@@ -13,7 +13,9 @@ async function createResident(req, res) {
 // List all residents
 async function getResidents(req, res) {
   try {
-    const list = await Resident.find().sort({ createdAt: -1 });
+    console.log('Querying residents with homeIds:', req.homeIds); // Debug
+    const list = await Resident.find({ homeId: { $in: req.homeIds } }).sort({ createdAt: -1 });
+    console.log('Found residents:', list.map(r => ({ name: r.name, homeId: r.homeId }))); // Debug
     return res.json(list);
   } catch (err) {
     return res.status(500).json({ message: 'Fetch failed', error: err.message });
