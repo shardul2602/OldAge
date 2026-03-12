@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Community Forum</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <nav class="nav between container">
+      <div class="nav-left">
+        <img class="logo" src="/careconnectlogo.png" alt="CareConnect" />
+        <a href="/index.html">Home</a>
+        <a href="/admin.html" id="adminLink">Admin Dashboard</a>
+        <a href="/forum.html">Forum</a>
+        <a href="/residents.html">Residents</a>
+        <a href="/volunteer.html">Visits</a>
+        <a href="/donations.html">Donations</a>
+      </div>
+      <div class="user-dropdown">
+        <a class="user-btn" href="#" id="userBtn" title="Account">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Z" stroke="currentColor" stroke-width="1.5"/><path d="M21 22a9 9 0 1 0-18 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </a>
+        <div class="menu" id="userMenu">
+          <a href="#" id="copyUserId">Copy ID</a>
+          <a href="#" id="logoutLink">Logout</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h1 class="h1">Community Forum</h1>
+      
+      <!-- Home Selection for Volunteers -->
+      <div id="homeSelectorSection" style="margin-bottom: 20px;">
+        <label class="h2" for="forumHomeSelect">Select Home:</label>
+        <select class="input" id="forumHomeSelect" style="width: 300px;">
+          <option value="">Loading homes...</option>
+        </select>
+      </div>
+
+      <!-- Create Post Button -->
+      <div style="margin-bottom: 20px;">
+        <button class="btn primary" id="createPostBtn">Create New Post</button>
+        <button class="btn" id="refreshPostsBtn">🔄 Refresh Posts</button>
+      </div>
+
+      <!-- Posts List -->
+      <div id="postsContainer">
+        <h2 class="h2">Posts</h2>
+        <div id="postsList">
+          <p>Loading posts...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let currentUser = null;
+    let selectedHomeId = null;
+
+    // Initialize forum
+    async function initForum() {
+      currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (!currentUser) {
+        toast('Please login to access forum');
+        location.href = '/login.html';
+        return;
+      }
+
+      // Setup user menu
+      setupUserMenu();
+      
+      // Setup home selector
+      await setupHomeSelector();
+      
+      // Load posts
+      if (selectedHomeId) {
+        loadPosts();
+      }
+    }
+
+    // Setup user menu
+    function setupUserMenu() {
+      const adminLink = document.getElementById('adminLink');
+      if (adminLink && !['admin', 'superadmin'].includes(currentUser.role)) {
+        adminLink.style.display = 'none';
+      }
+    }
+
+    // Setup home selector
+    async function setupHomeSelector() {
+      const homeSelectorSection = document.getElementById('homeSelectorSection');
+      const forumHomeSelect = document.getElementById('forumHomeSelect');
+
+      // Super Admin sees all homes, others see their assigned homes
+      let homes = [];
+      
+      if (currentUser.role === 'superadmin') {
+        homes = await api('/api/homes');
+      } else if (currentUser.role === 'admin') {
+        // Admin gets their assigned homes
+        homes = currentUser.homeId || [];
+      } else if (currentUser.role === 'volunteer') {
+        // Volunteer gets their assigned homes
+        homes = currentUser.homeId || [];
+        homeSelectorSection.style.display = 'block'; // Show selector for volunteers
+      }
+
+      // Populate dropdown
+      forumHomeSelect.innerHTML = '<option value="">Select a home...</option>' +
+        homes.map(home => `<option value="${home._id}">${home.name}</option>`).join('');
+
+      // Auto-select first home for admins, show selector for superadmin
+      if (currentUser.role === 'admin' && homes.length > 0) {
+        selectedHomeId = homes[0]._id || homes[0];
+        forumHomeSelect.value = selectedHomeId;
+        homeSelectorSection.style.display = 'none'; // Hide selector for admins
+        console.log('🏠 Admin auto-selected home:', selectedHomeId);
+      } else if (currentUser.role === 'superadmin') {
+        // Show selector for superadmin so they can choose any home
+        homeSelectorSection.style.display = 'block';
+      }
+
+      // Add change event listener
+      forumHomeSelect.addEventListener('change', (e) => {
+        selectedHomeId = e.target.value;
+        if (selectedHomeId) {
+          loadPosts();
+        } else {
+          document.getElementById('postsList').innerHTML = '<p>Please select a home to view posts</p>';
+        }
+      });
+
+      // Load posts if home is selected
+      if (selectedHomeId) {
+        loadPosts();
+      }
+    }
+
+    // Load posts for selected home
+    async function loadPosts() {
+      console.log('🔄 Loading posts for home:', selectedHomeId);
+      if (!selectedHomeId) {
+        console.log('❌ No home selected, skipping load');
+        return;
+      }
+
+      try {
+        // Add cache-busting timestamp
+        const timestamp = Date.now();
+        const response = await api(`/api/forum/home/${selectedHomeId}?t=${timestamp}`);
+        const posts = response.posts;
+        console.log('📝 Posts received:', posts.length);
+
+        const postsList = document.getElementById('postsList');
+        
+        if (posts.length === 0) {
+          postsList.innerHTML = '<p>No posts yet. Be the first to create one!</p>';
+        } else {
+          postsList.innerHTML = posts.map(post => `
+            <div class="panel" style="margin-bottom: 15px; padding: 15px; ${post.isGlobal ? 'border: 2px solid #ff6b6b; background: #fff5f5;' : ''}">
+              <h3>
+                ${post.isGlobal ? '📢 ' : ''}${post.title}
+                ${post.isGlobal ? '<span style="color: #ff6b6b; font-size: 12px; margin-left: 10px;">GLOBAL ANNOUNCEMENT</span>' : ''}
+              </h3>
+              <p style="color: #666; font-size: 12px; margin-bottom: 10px;">
+                By ${post.createdBy?.name || 'Unknown'} (${post.createdBy?.role || 'Unknown'}) 
+                ${post.isGlobal ? '🌍 Global' : `in ${post.oldAgeHome?.name || 'Unknown Home'}`} • 
+                ${new Date(post.createdAt).toLocaleDateString()}
+              </p>
+              <p style="margin-bottom: 10px;">${post.content ? (post.content.substring(0, 200) + (post.content.length > 200 ? '...' : '')) : 'No content'}</p>
+              <div>
+                <button class="btn" onclick="viewPost('${post._id}')">Read More</button>
+                ${canDeletePost(post) ? `<button class="btn danger" onclick="deletePost('${post._id}')">Delete</button>` : ''}
+              </div>
+            </div>
+          `).join('');
+          console.log('✅ Posts rendered successfully');
+        }
+      } catch (error) {
+        console.error('❌ Failed to load posts:', error);
+        console.error('Error details:', error.message, error.stack);
+        document.getElementById('postsList').innerHTML = `<p style="color: red;">Failed to load posts: ${error.message}</p>`;
+        toast('Failed to load posts: ' + error.message);
+      }
+    }
+
+    // Check if user can delete post
+    function canDeletePost(post) {
+      if (currentUser.role === 'superadmin') return true;
+      if (currentUser.role === 'admin' && post.oldAgeHome && currentUser.homeId && currentUser.homeId.some(h => h._id === post.oldAgeHome._id)) return true;
+      return false;
+    }
+
+    // View single post
+    function viewPost(postId) {
+      location.href = `/forum-post.html?id=${postId}`;
+    }
+
+    // Delete post
+    async function deletePost(postId) {
+      if (!confirm('Are you sure you want to delete this post?')) return;
+
+      try {
+        await api(`/api/forum/post/${postId}`, { method: 'DELETE' });
+        toast('Post deleted successfully');
+        loadPosts();
+      } catch (error) {
+        toast('Failed to delete post: ' + error.message);
+      }
+    }
+
+    // Create post button
+    document.getElementById('createPostBtn')?.addEventListener('click', () => {
+      if (!selectedHomeId) {
+        toast('Please select a home first');
+        return;
+      }
+      location.href = `/forum-create.html?home=${selectedHomeId}`;
+    });
+    
+    // Refresh posts button
+    document.getElementById('refreshPostsBtn')?.addEventListener('click', () => {
+      if (!selectedHomeId) {
+        toast('Please select a home first');
+        return;
+      }
+      console.log('🔄 Manual refresh triggered for home:', selectedHomeId);
+      loadPosts();
+    });
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initForum);
+  </script>
+</body>
+</html>

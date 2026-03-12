@@ -7,8 +7,25 @@ async function attachUser(req, res, next) {
       const user = await User.findById(id).select('-password').populate('homeId', 'name address contact');
       if (user) {
         req.user = user;
-        req.homeIds = user.homeId.map(h => h._id || h);
+        req.homeIds = user.homeId.map(h => h._id ? h._id.toString() : h.toString());
         req.homeId = user.homeId[0]?._id || user.homeId[0]; // Primary home for compatibility
+        
+        // Handle selected home filter for volunteers
+        if (user.role === 'volunteer') {
+          const selectedHome = req.header('x-selected-home');
+          console.log('🏠 Volunteer home selection:', {
+            selectedHome,
+            userHomeIds: user.homeId.map(h => String(h._id)),
+            userHomeIdsRaw: user.homeId,
+            isValid: selectedHome && user.homeId.some(homeId => String(homeId._id) === selectedHome)
+          });
+          if (selectedHome && user.homeId.some(homeId => String(homeId._id) === selectedHome)) {
+            req.homeIds = [selectedHome]; // Filter to selected home only
+            console.log('✅ Filtering to single home:', selectedHome);
+          } else {
+            console.log('❌ No valid home selection, using all homes');
+          }
+        }
       }
     }
   } catch (_) {}
@@ -23,4 +40,16 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { attachUser, requireRole };
+function requireSuperAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ message: 'Unauthorized: user not found' });
+  if (req.user.role !== 'superadmin') return res.status(403).json({ message: 'Forbidden: superadmin required' });
+  next();
+}
+
+function requireAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ message: 'Unauthorized: user not found' });
+  if (!['admin', 'superadmin'].includes(req.user.role)) return res.status(403).json({ message: 'Forbidden: admin required' });
+  next();
+}
+
+module.exports = { attachUser, requireRole, requireSuperAdmin, requireAdmin };

@@ -17,6 +17,7 @@
         <img class="logo" src="/careconnectlogo.png" alt="CareConnect" />
         <a href="/index.html">Home</a>
         <a href="/admin.html" id="adminLink">Admin Dashboard</a>
+        <a href="/forum.html">Community Forum</a>
         <a href="/residents.html">Resident Management</a>
         <a href="/volunteer.html">Volunteer Dashboard</a>
         <a href="/donations.html">Donations</a>
@@ -79,17 +80,15 @@
     <section class="hero fade-up">
       <div class="panel">
         <span class="badge">Care • Dignity • Support</span>
-        <h1 class="hero-title font-display">Old Age Home Assistance</h1>
-        <p class="hero-sub">A simple system to manage residents, volunteers, visits, and donations — crafted for clarity and compassion.</p>
-        <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
-          <button class="btn primary" onclick="window.location.href='/residents.html'">Manage Residents</button>
-          <button class="btn primary" onclick="window.location.href='/volunteer.html'">Volunteer Visits</button>
-          <button class="btn primary" onclick="window.location.href='/donations.html'">Donations</button>
+        <h1 class="hero-title font-display" id="welcomeTitle">Old Age Home Assistance</h1>
+        <p class="hero-sub" id="welcomeSub">A simple system to manage residents, volunteers, visits, and donations — crafted for clarity and compassion.</p>
+        <div id="roleBasedContent">
+          <!-- Role-based content will be inserted here by JavaScript -->
         </div>
       </div>
       <div class="panel">
-        <h2 class="h1 font-display">Our Impact</h2>
-        <p class="h2">Empowering elders with dignity and care through coordinated support.</p>
+        <h2 class="h1 font-display" id="impactTitle">Our Impact</h2>
+        <p class="h2" id="impactSub">Empowering elders with dignity and care through coordinated support.</p>
         <p>Join our community to make a meaningful difference in the lives of seniors.</p>
       </div>
     </section>
@@ -146,6 +145,72 @@
   </main>
   <script src="/js/app.js?t=789"></script>
   <script>
+    // Role-based homepage content
+    document.addEventListener('DOMContentLoaded', () => {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const welcomeTitle = document.getElementById('welcomeTitle');
+      const welcomeSub = document.getElementById('welcomeSub');
+      const impactTitle = document.getElementById('impactTitle');
+      const impactSub = document.getElementById('impactSub');
+      const roleBasedContent = document.getElementById('roleBasedContent');
+      
+      if (currentUser._id) {
+        if (currentUser.role === 'superadmin') {
+          // Super Admin - Central Dashboard
+          welcomeTitle.textContent = 'Super Admin Dashboard';
+          welcomeSub.textContent = 'Central management for all old age homes';
+          impactTitle.textContent = 'System Overview';
+          impactSub.textContent = 'Manage all homes, residents, donations, and visits';
+          
+          roleBasedContent.innerHTML = `
+            <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+              <button class="btn primary" onclick="window.location.href='/admin.html'">Manage Homes</button>
+              <button class="btn primary" onclick="window.location.href='/residents.html'">All Residents</button>
+              <button class="btn primary" onclick="window.location.href='/donations.html'">All Donations</button>
+              <button class="btn primary" onclick="window.location.href='/volunteer.html'">All Visits</button>
+              <button class="btn primary" onclick="window.location.href='/gallery.html'">Gallery</button>
+              <button class="btn primary" onclick="window.location.href='/forum.html'">Community Forum</button>
+            </div>
+          `;
+        } else if (currentUser.role === 'admin') {
+          // Admin - Home-specific Dashboard
+          welcomeTitle.textContent = 'Admin Dashboard';
+          welcomeSub.textContent = 'Managing your old age home';
+          impactTitle.textContent = 'Your Home Impact';
+          impactSub.textContent = 'Manage residents, volunteers, and donations for your home';
+          
+          roleBasedContent.innerHTML = `
+            <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+              <button class="btn primary" onclick="window.location.href='/residents.html'">Manage Residents</button>
+              <button class="btn primary" onclick="window.location.href='/volunteer.html'">Volunteer Visits</button>
+              <button class="btn primary" onclick="window.location.href='/donations.html'">Donations</button>
+              <button class="btn primary" onclick="window.location.href='/gallery.html'">Gallery</button>
+              <button class="btn primary" onclick="window.location.href='/forum.html'">Community Forum</button>
+            </div>
+          `;
+        } else if (currentUser.role === 'volunteer') {
+          // Volunteer - Home Selection
+          welcomeTitle.textContent = 'Volunteer Dashboard';
+          welcomeSub.textContent = 'Select a home to view residents and schedule visits';
+          impactTitle.textContent = 'Your Impact';
+          impactSub.textContent = 'Make a difference in elders\' lives through your service';
+          
+          roleBasedContent.innerHTML = `
+            <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+              <button class="btn primary" onclick="window.location.href='/residents.html'">View Residents</button>
+              <button class="btn primary" onclick="window.location.href='/volunteer.html'">Schedule Visits</button>
+              <button class="btn primary" onclick="window.location.href='/donations.html'">View Donations</button>
+              <button class="btn primary" onclick="window.location.href='/gallery.html'">View Gallery</button>
+              <button class="btn primary" onclick="window.location.href='/forum.html'">Community Forum</button>
+            </div>
+            <p style="margin-top: 10px; font-size: 14px; color: #666;">
+              💡 Select a home from the dropdown menu to view residents and schedule visits
+            </p>
+          `;
+        }
+      }
+    });
+    
     document.getElementById('writeReviewBtn').addEventListener('click', () => {
       const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
       if (!currentUser._id) {

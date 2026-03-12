@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forum Post</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <nav class="nav between container">
+      <div class="nav-left">
+        <img class="logo" src="/careconnectlogo.png" alt="CareConnect" />
+        <a href="/index.html">Home</a>
+        <a href="/forum.html">Forum</a>
+      </div>
+      <div class="user-dropdown">
+        <a class="user-btn" href="#" id="userBtn" title="Account">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Z" stroke="currentColor" stroke-width="1.5"/><path d="M21 22a9 9 0 1 0-18 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </a>
+        <div class="menu" id="userMenu">
+          <a href="#" id="copyUserId">Copy ID</a>
+          <a href="#" id="logoutLink">Logout</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div id="postContainer">
+        <h1 class="h1">Loading post...</h1>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 20px;">
+      <h2 class="h2">Comments</h2>
+      
+      <!-- Add Comment Form -->
+      <div id="commentForm" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+        <h3 class="h3">Add Comment</h3>
+        <textarea class="input" id="commentText" placeholder="Write your comment..." maxlength="1000" rows="3"></textarea>
+        <button class="btn primary" id="addCommentBtn" style="margin-top: 10px;">Add Comment</button>
+      </div>
+      
+      <!-- Comments List -->
+      <div id="commentsList">
+        <p>Loading comments...</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let currentUser = null;
+    let postId = null;
+    let postData = null;
+
+    // Initialize post page
+    async function initPostPage() {
+      currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (!currentUser) {
+        toast('Please login to view posts');
+        location.href = '/login.html';
+        return;
+      }
+
+      // Get post ID from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      postId = urlParams.get('id');
+      
+      if (!postId) {
+        toast('Post ID not provided');
+        location.href = '/forum.html';
+        return;
+      }
+
+      // Setup user menu
+      setupUserMenu();
+      
+      // Load post and comments
+      await loadPost();
+      await loadComments();
+      
+      // Setup comment form
+      setupCommentForm();
+    }
+
+    // Setup user menu
+    function setupUserMenu() {
+      // User menu setup similar to forum.html
+    }
+
+    // Load post
+    async function loadPost() {
+      try {
+        const response = await api(`/api/forum/post/${postId}`);
+        postData = response.post;
+        
+        const postContainer = document.getElementById('postContainer');
+        postContainer.innerHTML = `
+          <div style="margin-bottom: 20px;">
+            <button class="btn" onclick="history.back()">← Back to Forum</button>
+            ${canDeletePost(postData) ? `<button class="btn danger" onclick="deletePost()" style="margin-left: 10px;">Delete Post</button>` : ''}
+          </div>
+          <h1 class="h1">${postData.title}</h1>
+          <div style="color: #666; font-size: 14px; margin-bottom: 20px;">
+            By ${postData.createdBy.name} (${postData.createdBy.role}) in ${postData.oldAgeHome.name} • 
+            ${new Date(postData.createdAt).toLocaleDateString()} at ${new Date(postData.createdAt).toLocaleTimeString()}
+          </div>
+          <div style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">${postData.content}</div>
+        `;
+      } catch (error) {
+        console.error('Failed to load post:', error);
+        document.getElementById('postContainer').innerHTML = '<p style="color: red;">Failed to load post</p>';
+      }
+    }
+
+    // Load comments
+    async function loadComments() {
+      try {
+        const response = await api(`/api/comment/${postId}`);
+        const comments = response.comments;
+        
+        const commentsList = document.getElementById('commentsList');
+        
+        if (comments.length === 0) {
+          commentsList.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
+        } else {
+          commentsList.innerHTML = comments.map(comment => `
+            <div class="panel" style="margin-bottom: 10px; padding: 10px;">
+              <div style="color: #666; font-size: 12px; margin-bottom: 5px;">
+                ${comment.userId.name} • ${new Date(comment.createdAt).toLocaleDateString()} at ${new Date(comment.createdAt).toLocaleTimeString()}
+              </div>
+              <div style="white-space: pre-wrap;">${comment.commentText}</div>
+              ${canDeleteComment(comment) ? `<button class="btn danger" onclick="deleteComment('${comment._id}')" style="margin-top: 5px; font-size: 12px;">Delete</button>` : ''}
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Failed to load comments:', error);
+        document.getElementById('commentsList').innerHTML = '<p style="color: red;">Failed to load comments</p>';
+      }
+    }
+
+    // Setup comment form
+    function setupCommentForm() {
+      const addCommentBtn = document.getElementById('addCommentBtn');
+      const commentText = document.getElementById('commentText');
+      
+      addCommentBtn.addEventListener('click', async () => {
+        const text = commentText.value.trim();
+        
+        if (!text) {
+          toast('Please enter a comment');
+          return;
+        }
+        
+        try {
+          const response = await api('/api/comment/add', {
+            method: 'POST',
+            body: JSON.stringify({ commentText: text, postId })
+          });
+          
+          toast('Comment added successfully!');
+          commentText.value = '';
+          await loadComments();
+          
+        } catch (error) {
+          toast('Failed to add comment: ' + error.message);
+        }
+      });
+    }
+
+    // Check if user can delete post
+    function canDeletePost(post) {
+      if (currentUser.role === 'superadmin') return true;
+      if (currentUser.role === 'admin' && currentUser.homeId.some(h => h._id === post.oldAgeHome._id)) return true;
+      return false;
+    }
+
+    // Check if user can delete comment
+    function canDeleteComment(comment) {
+      // User can delete their own comment
+      if (comment.userId._id === currentUser._id) return true;
+      
+      // Admin and Super Admin can delete comments from their home
+      if (currentUser.role === 'superadmin') return true;
+      if (currentUser.role === 'admin' && currentUser.homeId.some(h => h._id === postData.oldAgeHome._id)) return true;
+      
+      return false;
+    }
+
+    // Delete post
+    async function deletePost() {
+      if (!confirm('Are you sure you want to delete this post and all its comments?')) return;
+
+      try {
+        await api(`/api/forum/post/${postId}`, { method: 'DELETE' });
+        toast('Post deleted successfully');
+        location.href = '/forum.html';
+      } catch (error) {
+        toast('Failed to delete post: ' + error.message);
+      }
+    }
+
+    // Delete comment
+    async function deleteComment(commentId) {
+      if (!confirm('Are you sure you want to delete this comment?')) return;
+
+      try {
+        await api(`/api/comment/${commentId}`, { method: 'DELETE' });
+        toast('Comment deleted successfully');
+        await loadComments();
+      } catch (error) {
+        toast('Failed to delete comment: ' + error.message);
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initPostPage);
+  </script>
+</body>
+</html>

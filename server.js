@@ -8,6 +8,8 @@ const visitRoutes = require('./src/routes/visitRoutes');
 const donationRoutes = require('./src/routes/donationRoutes');
 const galleryRoutes = require('./src/routes/galleryRoutes');
 const homeRoutes = require('./src/routes/homeRoutes');
+const forumRoutes = require('./src/routes/forumRoutes');
+const commentRoutes = require('./src/routes/commentRoutes');
 const path = require('path');
 const { attachUser } = require('./src/middlewares/auth');
 
@@ -28,6 +30,8 @@ app.use('/api/visits', visitRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/homes', homeRoutes);
+app.use('/api/forum', forumRoutes);
+app.use('/api/comment', commentRoutes);
 
 // Basic routes for Step 1
 app.get('/', (req, res) => {

@@ -31,24 +31,221 @@
   </header>
   <main class="container">
     <script>
-      // Hide entire page content for volunteers
+      // Hide entire page content for non-admins
       try{
         const u = JSON.parse(localStorage.getItem('currentUser')||'null');
-        if(u && u.role !== 'admin'){
+        if(u && !['admin', 'superadmin'].includes(u.role)){
           document.querySelector('main').style.display = 'none';
           document.body.innerHTML = '<div class="container" style="text-align:center;margin-top:100px"><h1 class="h1">Access Denied</h1><p class="h2">Admins only</p></div>';
         }
       }catch{}
     </script>
     <section class="panel">
-      <h1 class="h1">Admin Demo </h1>
-      <p class="h2">Quick links</p>
-      <ul>
-        <li><a href="/residents.html">Manage Residents</a></li>
-        <li><a href="/donations.html">Manage Donations</a></li>
-      </ul>
+      <h1 class="h1">Admin Dashboard</h1>
+      <p class="h2">System Management</p>
+      
+      <!-- Home Management Section -->
+      <div id="homeManagement" style="margin-bottom: 20px;">
+        <h2 class="h2">Home Management</h2>
+        <div id="homesList" style="margin: 10px 0;"></div>
+        
+        <!-- Create New Home (Super Admin only) -->
+        <div id="createHomeSection" style="margin-top: 15px;">
+          <h3 class="h3">Create New Home</h3>
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input class="input" id="newHomeName" placeholder="Home Name" />
+            <input class="input" id="newHomeAddress" placeholder="Address" />
+            <input class="input" id="newHomeContact" placeholder="Contact" />
+            <button class="btn primary" id="createHomeBtn">Create Home</button>
+          </div>
+        </div>
+        
+        <!-- Create Admin for Home (Super Admin only) -->
+        <div id="createAdminSection" style="margin-top: 15px;">
+          <h3 class="h3">Create Admin for Home</h3>
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+            <select class="input" id="adminHomeSelect">
+              <option value="">Select Home</option>
+            </select>
+            <input class="input" id="adminName" placeholder="Admin Name" />
+            <input class="input" id="adminEmail" placeholder="Admin Email" />
+            <input class="input" id="adminPassword" placeholder="Password" value="demo123" />
+            <button class="btn primary" id="createAdminBtn">Create Admin</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Global Announcement Section (Super Admin only) -->
+      <div id="globalAnnouncementSection" style="margin-bottom: 20px;">
+        <h2 class="h2">📢 Global Announcement</h2>
+        <div class="panel" style="padding: 15px;">
+          <p style="margin-bottom: 15px; color: #666;">
+            Send announcements to ALL old age homes. These will appear in every forum.
+          </p>
+          <button class="btn primary" onclick="createGlobalAnnouncement()">
+            Create Global Announcement
+          </button>
+        </div>
+      </div>
+      
+      <!-- Quick Links -->
+      <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px;">
+        <a href="/residents.html" class="btn">Manage Residents</a>
+        <a href="/volunteer.html" class="btn">Schedule Visits</a>
+        <a href="/donations.html" class="btn">Manage Donations</a>
+        <a href="/gallery.html" class="btn">View Gallery</a>
+      </div>
     </section>
   </main>
   <script src="/js/app.js"></script>
+  <script>
+    // Load and display homes
+    async function loadHomes() {
+      try {
+        const homes = await api('/api/homes');
+        const homesList = document.getElementById('homesList');
+        const createHomeSection = document.getElementById('createHomeSection');
+        const createAdminSection = document.getElementById('createAdminSection');
+        const adminHomeSelect = document.getElementById('adminHomeSelect');
+        
+        if (homes.length === 0) {
+          homesList.innerHTML = '<p>No homes found.</p>';
+        } else {
+          homesList.innerHTML = '<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;">' +
+            homes.map(home => `
+              <div class="panel" style="padding: 10px;">
+                <h4>${home.name}</h4>
+                <p style="font-size: 12px; margin: 5px 0;">${home.address || 'No address'}</p>
+                <p style="font-size: 12px; margin: 5px 0;">${home.contact || 'No contact'}</p>
+              </div>
+            `).join('') + '</div>';
+          
+          // Populate admin home dropdown
+          adminHomeSelect.innerHTML = '<option value="">Select Home</option>' +
+            homes.map(home => `<option value="${home._id}">${home.name}</option>`).join('');
+        }
+        
+        // Show create sections only for superadmin
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        if (user.role !== 'superadmin') {
+          createHomeSection.style.display = 'none';
+          createAdminSection.style.display = 'none';
+          document.getElementById('globalAnnouncementSection').style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Failed to load homes:', error);
+        document.getElementById('homesList').innerHTML = '<p style="color: red;">Failed to load homes</p>';
+      }
+    }
+    
+    // Create Global Announcement
+    function createGlobalAnnouncement() {
+      const title = prompt('Enter global announcement title:');
+      if (!title || !title.trim()) {
+        toast('Please enter a title');
+        return;
+      }
+      
+      const content = prompt('Enter global announcement content:');
+      if (!content || !content.trim()) {
+        toast('Please enter content');
+        return;
+      }
+      
+      createGlobalPost(title.trim(), content.trim());
+    }
+    
+    // Create global post
+    async function createGlobalPost(title, content) {
+      try {
+        const response = await api('/api/forum/create', {
+          method: 'POST',
+          body: JSON.stringify({
+            title,
+            content,
+            isGlobal: true
+          })
+        });
+        
+        toast(response.message || 'Global announcement created successfully!');
+        
+      } catch (error) {
+        toast('Failed to create global announcement: ' + error.message);
+      }
+    }
+    
+    // Create new home (Super Admin only)
+    document.getElementById('createHomeBtn')?.addEventListener('click', async () => {
+      const name = document.getElementById('newHomeName').value.trim();
+      const address = document.getElementById('newHomeAddress').value.trim();
+      const contact = document.getElementById('newHomeContact').value.trim();
+      
+      if (!name) {
+        toast('Please enter home name');
+        return;
+      }
+      
+      try {
+        await api('/api/homes', {
+          method: 'POST',
+          body: JSON.stringify({ name, address, contact })
+        });
+        
+        toast('Home created successfully!');
+        
+        // Clear form
+        document.getElementById('newHomeName').value = '';
+        document.getElementById('newHomeAddress').value = '';
+        document.getElementById('newHomeContact').value = '';
+        
+        // Reload homes
+        loadHomes();
+      } catch (error) {
+        toast('Failed to create home: ' + error.message);
+      }
+    });
+    
+    // Create admin for home (Super Admin only)
+    document.getElementById('createAdminBtn')?.addEventListener('click', async () => {
+      const homeId = document.getElementById('adminHomeSelect').value;
+      const name = document.getElementById('adminName').value.trim();
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+      
+      if (!homeId || !name || !email || !password) {
+        toast('Please fill all fields');
+        return;
+      }
+      
+      try {
+        // Create admin user
+        const response = await api('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ 
+            name, 
+            email, 
+            password, 
+            role: 'admin',
+            homeId: [homeId] // Assign to selected home
+          })
+        });
+        
+        toast(`Admin created successfully for ${document.getElementById('adminHomeSelect').options[document.getElementById('adminHomeSelect').selectedIndex].text}!`);
+        
+        // Clear form
+        document.getElementById('adminName').value = '';
+        document.getElementById('adminEmail').value = '';
+        document.getElementById('adminPassword').value = 'demo123';
+        document.getElementById('adminHomeSelect').value = '';
+        
+        console.log('Admin credentials:', response.user);
+      } catch (error) {
+        toast('Failed to create admin: ' + error.message);
+      }
+    });
+    
+    // Load homes when page loads
+    document.addEventListener('DOMContentLoaded', loadHomes);
+  </script>
 </body>
 </html>

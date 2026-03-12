@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Forum Post</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <nav class="nav between container">
+      <div class="nav-left">
+        <img class="logo" src="/careconnectlogo.png" alt="CareConnect" />
+        <a href="/index.html">Home</a>
+        <a href="/forum.html">Forum</a>
+      </div>
+      <div class="user-dropdown">
+        <a class="user-btn" href="#" id="userBtn" title="Account">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Z" stroke="currentColor" stroke-width="1.5"/><path d="M21 22a9 9 0 1 0-18 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </a>
+        <div class="menu" id="userMenu">
+          <a href="#" id="copyUserId">Copy ID</a>
+          <a href="#" id="logoutLink">Logout</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h1 class="h1">Create New Post</h1>
+      
+      <form id="createPostForm">
+        <div style="margin-bottom: 15px;">
+          <label class="h2" for="postTitle">Title:</label>
+          <input class="input" id="postTitle" type="text" placeholder="Enter post title" maxlength="200" required>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <label class="h2" for="postContent">Content:</label>
+          <textarea class="input" id="postContent" placeholder="Write your post content..." maxlength="2000" rows="8" required></textarea>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <label class="h2" for="postHome">Home:</label>
+          <select class="input" id="postHome" required>
+            <option value="">Loading homes...</option>
+          </select>
+        </div>
+        
+        <!-- Global Announcement Option (Super Admin only) -->
+        <div id="globalOption" style="margin-bottom: 15px;">
+          <label style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="isGlobal" style="width: auto;">
+            <span class="h2" style="margin: 0;">Global Announcement (appears in all homes)</span>
+          </label>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn primary">Create Post</button>
+          <button type="button" class="btn" onclick="history.back()">Cancel</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let currentUser = null;
+    let selectedHomeId = null;
+
+    // Initialize create post page
+    async function initCreatePost() {
+      currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (!currentUser) {
+        toast('Please login to create posts');
+        location.href = '/login.html';
+        return;
+      }
+
+      // Setup user menu
+      setupUserMenu();
+      
+      // Setup home selector
+      await setupHomeSelector();
+      
+      // Setup form
+      setupForm();
+    }
+
+    // Setup user menu
+    function setupUserMenu() {
+      // User menu setup similar to forum.html
+    }
+
+    // Setup home selector
+    async function setupHomeSelector() {
+      const postHome = document.getElementById('postHome');
+      
+      // Get home from URL parameter or user's assigned homes
+      const urlParams = new URLSearchParams(window.location.search);
+      const homeFromUrl = urlParams.get('home');
+      
+      let homes = [];
+      
+      if (currentUser.role === 'superadmin') {
+        homes = await api('/api/homes');
+      } else if (currentUser.role === 'admin') {
+        homes = currentUser.homeId || [];
+      } else if (currentUser.role === 'volunteer') {
+        homes = currentUser.homeId || [];
+      }
+
+      // Populate dropdown
+      postHome.innerHTML = '<option value="">Select a home...</option>' +
+        homes.map(home => `<option value="${home._id}">${home.name}</option>`).join('');
+
+      // Auto-select if home provided in URL
+      if (homeFromUrl) {
+        postHome.value = homeFromUrl;
+        selectedHomeId = homeFromUrl;
+      }
+    }
+
+    // Setup form
+    function setupForm() {
+      const form = document.getElementById('createPostForm');
+      const globalOption = document.getElementById('globalOption');
+      const isGlobalCheckbox = document.getElementById('isGlobal');
+      const postHomeSelect = document.getElementById('postHome');
+      
+      // Show global option only for Super Admin
+      if (currentUser.role !== 'superadmin') {
+        globalOption.style.display = 'none';
+      }
+      
+      // Handle global checkbox change
+      isGlobalCheckbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          postHomeSelect.required = false;
+          postHomeSelect.disabled = true;
+          postHomeSelect.value = '';
+        } else {
+          postHomeSelect.required = true;
+          postHomeSelect.disabled = false;
+        }
+      });
+      
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const title = document.getElementById('postTitle').value.trim();
+        const content = document.getElementById('postContent').value.trim();
+        const oldAgeHome = document.getElementById('postHome').value;
+        const isGlobal = document.getElementById('isGlobal').checked;
+        
+        if (!title || !content) {
+          toast('Please fill title and content');
+          return;
+        }
+        
+        if (!isGlobal && !oldAgeHome) {
+          toast('Please select a home or check Global Announcement');
+          return;
+        }
+        
+        try {
+          const response = await api('/api/forum/create', {
+            method: 'POST',
+            body: JSON.stringify({ title, content, oldAgeHome, isGlobal })
+          });
+          
+          toast(response.message || 'Post created successfully!');
+          setTimeout(() => {
+            location.href = '/forum.html';
+          }, 1000);
+          
+        } catch (error) {
+          toast('Failed to create post: ' + error.message);
+        }
+      });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initCreatePost);
+  </script>
+</body>
+</html>
