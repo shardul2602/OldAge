@@ -3,7 +3,7 @@ const User = require('../models/User');
 // Register new user (admin or volunteer)
 async function register(req, res) {
   try {
-    const { name, email, password, homeId } = req.body;
+    const { name, email, password, homeId, role = 'volunteer' } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
@@ -13,13 +13,13 @@ async function register(req, res) {
 
     // If no homeId provided, assign to all available homes (for volunteers)
     let finalHomeId = homeId;
-    if (!homeId) {
+    if (!homeId && role === 'volunteer') {
       const Home = require('../models/Home');
       const homes = await Home.find({ name: { $ne: 'Default Home' } });
       finalHomeId = homes.length > 0 ? homes.map(h => h._id) : [(await Home.findOne({ name: 'Default Home' }))._id];
     }
 
-    const user = await User.create({ name, email, password, role: 'volunteer', homeId: Array.isArray(finalHomeId) ? finalHomeId : [finalHomeId] });
+    const user = await User.create({ name, email, password, role, homeId: Array.isArray(finalHomeId) ? finalHomeId : [finalHomeId] });
     
     // Populate home details for response
     const populatedUser = await User.findById(user._id).populate('homeId', 'name address contact');
@@ -35,12 +35,29 @@ async function register(req, res) {
 async function login(req, res) {
   try {
     const { email, password } = req.body;
+    console.log('🔍 Login attempt:', { 
+      email, 
+      passwordLength: password?.length,
+      passwordType: typeof password,
+      passwordValue: password
+    });
     if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
 
     const user = await User.findOne({ email }).populate('homeId', 'name address contact');
+    console.log('👤 User found:', !!user);
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
+    console.log('🔐 Comparing password...');
+    console.log('- Stored password length:', user.password.length);
+    console.log('- Stored password starts with $2:', user.password.startsWith('$2'));
+    
+    // Debug: Test password comparison in multiple ways
+    const bcrypt = require('bcryptjs');
+    console.log('- Direct bcrypt test:', await bcrypt.compare(password, user.password));
+    console.log('- User method test:', await user.comparePassword(password));
+    
     const ok = await user.comparePassword(password);
+    console.log('✅ Password match:', ok);
     if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
 
     // Elevate to admin if email is allowlisted in ADMIN_EMAILS

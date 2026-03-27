@@ -72,6 +72,13 @@
         return;
       }
 
+      // Restrict forum access for volunteers
+      if (currentUser.role === 'volunteer') {
+        toast('Community Forum is not available for volunteers');
+        location.href = '/index.html';
+        return;
+      }
+
       // Setup user menu
       setupUserMenu();
       

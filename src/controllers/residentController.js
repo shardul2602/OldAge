@@ -13,8 +13,20 @@ async function createResident(req, res) {
 // List all residents
 async function getResidents(req, res) {
   try {
-    console.log('Querying residents with homeIds:', req.homeIds); // Debug
-    const list = await Resident.find({ homeId: { $in: req.homeIds } }).sort({ createdAt: -1 });
+    let filter = {};
+    
+    // Role-based filtering
+    if (req.user.role === 'admin') {
+      // Admin sees only their home's residents
+      filter.homeId = { $in: req.homeIds };
+    } else if (req.user.role === 'volunteer') {
+      // Volunteer sees residents from their assigned homes
+      filter.homeId = { $in: req.homeIds };
+    }
+    // Superadmin sees all residents (no filter)
+    
+    console.log('Querying residents with filter:', filter); // Debug
+    const list = await Resident.find(filter).sort({ createdAt: -1 });
     console.log('Found residents:', list.map(r => ({ name: r.name, homeId: r.homeId }))); // Debug
     return res.json(list);
   } catch (err) {

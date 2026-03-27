@@ -31,10 +31,11 @@
   </header>
   <main class="container">
     <section class="panel">
-      <h1 class="h1">Volunteer Dashboard</h1>
+      <h1 class="h1">Visit Management</h1>
+      <p class="h2">Schedule and manage visits for residents</p>
       <div class="grid cols-2">
-        <input class="input" id="volunteerId" placeholder="Your Volunteer User ID" />
-        <button class="btn" id="loadVisits">Load My Visits</button>
+        <input class="input" id="volunteerId" placeholder="Volunteer User ID" />
+        <button class="btn" id="loadVisits">Load Visits</button>
       </div>
     </section>
 
@@ -76,8 +77,8 @@
 
     async function loadMyVisits(){
       const user = JSON.parse(localStorage.getItem('currentUser')||'null');
-      if(!user || user.role !== 'volunteer'){
-        toast('Please sign in as a Volunteer to view visits.');
+      if(!user || !['volunteer', 'admin', 'superadmin'].includes(user.role)){
+        toast('Please sign in to view visits.');
         return;
       }
       const volId = $('#volunteerId').value.trim();

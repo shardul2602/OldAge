@@ -19,7 +19,16 @@ exports.uploadImage = async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const publicUrl = `/uploads/${req.file.filename}`;
     const Gallery = require('../models/Gallery');
-    const newImage = new Gallery({ url: publicUrl, homeId: req.homeId });
+    
+    // Use the first homeId from the array for admins
+    const homeId = req.homeId || (req.homeIds && req.homeIds[0]);
+    
+    console.log('🔍 Upload - User role:', req.user.role);
+    console.log('🔍 Upload - req.homeId:', req.homeId);
+    console.log('🔍 Upload - req.homeIds:', req.homeIds);
+    console.log('🔍 Upload - Using homeId:', homeId);
+    
+    const newImage = new Gallery({ url: publicUrl, homeId: homeId });
     await newImage.save();
     res.status(201).json(newImage);
   } catch (err) {

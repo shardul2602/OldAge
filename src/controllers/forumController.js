@@ -108,33 +108,73 @@ async function getPostsByHome(req, res) {
 async function getSinglePost(req, res) {
   try {
     const { id: postId } = req.params;
+    console.log('🔍 Single Post - Looking for post ID:', postId);
 
     const post = await ForumPost.findById(postId)
       .populate('createdBy', 'name email role')
       .populate('oldAgeHome', 'name address');
+
+    console.log('🔍 Single Post - Post found:', !!post);
+    if (post) {
+      console.log('🔍 Single Post - Post data:', {
+        title: post.title,
+        isGlobal: post.isGlobal,
+        oldAgeHome: post.oldAgeHome,
+        createdBy: post.createdBy
+      });
+    }
 
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
     // Role-based access check
+    console.log('🔍 Single Post - User role:', req.user.role);
+    console.log('🔍 Single Post - Post isGlobal:', post.isGlobal);
+    console.log('🔍 Single Post - Post oldAgeHome:', post.oldAgeHome);
+    console.log('🔍 Single Post - User homeIds:', req.homeIds);
+    
     if (req.user.role === 'admin') {
-      if (!req.homeIds.includes(post.oldAgeHome._id.toString())) {
-        return res.status(403).json({ message: 'Access denied' });
+      // Admin can access global posts OR posts from their assigned homes
+      if (post.isGlobal) {
+        console.log('✅ Single Post - Admin accessing global post - allowed');
+      } else {
+        // For regular posts, check if admin has access to the home
+        if (!post.oldAgeHome || !post.oldAgeHome._id) {
+          console.log('❌ Single Post - Admin access denied - post has no valid home');
+          return res.status(403).json({ message: 'Access denied - invalid post home' });
+        }
+        
+        const homeIdStr = post.oldAgeHome._id.toString();
+        if (!req.homeIds || !req.homeIds.includes(homeIdStr)) {
+          console.log('❌ Single Post - Admin access denied - home not in admin homes');
+          return res.status(403).json({ message: 'Access denied - not your home' });
+        }
+        console.log('✅ Single Post - Admin accessing home post - allowed');
       }
     } else if (req.user.role === 'volunteer') {
-      if (!req.homeIds.includes(post.oldAgeHome._id.toString())) {
-        return res.status(403).json({ message: 'Access denied' });
+      // Volunteer can access global posts OR posts from their assigned homes
+      if (post.isGlobal) {
+        console.log('✅ Single Post - Volunteer accessing global post - allowed');
+      } else {
+        // For regular posts, check if volunteer has access to the home
+        if (!post.oldAgeHome || !post.oldAgeHome._id) {
+          console.log('❌ Single Post - Volunteer access denied - post has no valid home');
+          return res.status(403).json({ message: 'Access denied - invalid post home' });
+        }
+        
+        const homeIdStr = post.oldAgeHome._id.toString();
+        if (!req.homeIds || !req.homeIds.includes(homeIdStr)) {
+          console.log('❌ Single Post - Volunteer access denied - home not in volunteer homes');
+          return res.status(403).json({ message: 'Access denied - not your assigned home' });
+        }
+        console.log('✅ Single Post - Volunteer accessing home post - allowed');
       }
+    } else if (req.user.role === 'superadmin') {
+      console.log('✅ Single Post - Super admin access - always allowed');
     }
-    // Super Admin can access all posts
 
-    // Get comments for this post
-    const comments = await ForumComment.find({ postId })
-      .populate('userId', 'name email')
-      .sort({ createdAt: 1 });
-
-    res.json({ post, comments });
+    res.json({ post });
   } catch (error) {
     res.status(500).json({ message: 'Failed to get post', error: error.message });
   }

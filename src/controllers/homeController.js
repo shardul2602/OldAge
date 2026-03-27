@@ -10,12 +10,12 @@ async function getHomes(req, res) {
   }
 }
 
-// Create a home (admin only)
+// Create a home (superadmin only)
 async function createHome(req, res) {
   try {
     const { name, address, contact } = req.body;
     if (!name) return res.status(400).json({ error: 'Name required' });
-    const home = await Home.create({ name, address, contact, adminId: req.user._id });
+    const home = await Home.create({ name, address, contact });
     res.status(201).json(home);
   } catch (err) {
     res.status(500).json({ error: err.message });

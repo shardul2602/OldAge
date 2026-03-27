@@ -56,11 +56,15 @@
     document.getElementById('googleLoginBtn')?.addEventListener('click', handleGoogleLogin);
   </script>
   <script>
-    $('#loginBtn').addEventListener('click', async () => {
+    document.getElementById('loginBtn').addEventListener('click', async () => {
       try{
-        const payload = { email: $('#email').value, password: $('#password').value };
+        const payload = { 
+          email: document.getElementById('email').value, 
+          password: document.getElementById('password').value 
+        };
+        console.log('Sending payload:', payload); // Debug
         const data = await api('/api/auth/login',{ method:'POST', body: JSON.stringify(payload)});
-        $('#result').textContent = 'Login successful: ' + (data.user?.name || '') + ' | ID: ' + (data.user?._id || '');
+        document.getElementById('result').textContent = 'Login successful: ' + (data.user?.name || '') + ' | ID: ' + (data.user?._id || '');
         localStorage.setItem('currentUser', JSON.stringify(data.user));
         toast('Logged in. ID saved. Redirecting to Home...');
         setTimeout(()=> location.href='/index.html', 600);

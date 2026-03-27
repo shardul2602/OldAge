@@ -65,6 +65,13 @@
         return;
       }
 
+      // Restrict forum access for volunteers
+      if (currentUser.role === 'volunteer') {
+        toast('Community Forum is not available for volunteers');
+        location.href = '/index.html';
+        return;
+      }
+
       // Get post ID from URL
       const urlParams = new URLSearchParams(window.location.search);
       postId = urlParams.get('id');
@@ -79,6 +86,9 @@
       setupUserMenu();
       
       // Load post and comments
+      console.log('🔍 Forum Post Debug - Post ID from URL:', postId);
+      console.log('🔍 Forum Post Debug - Current User:', currentUser);
+      
       await loadPost();
       await loadComments();
       
@@ -94,22 +104,60 @@
     // Load post
     async function loadPost() {
       try {
-        const response = await api(`/api/forum/post/${postId}`);
+        console.log('🔍 Loading post - Calling API with postId:', postId);
+        const response = await api('/api/forum/post/' + postId);
+        console.log('🔍 Loading post - API response:', response);
+        
+        if (!response.post) {
+          console.log('❌ Loading post - No post in response');
+          throw new Error('Post not found in response');
+        }
+        
         postData = response.post;
+        console.log('🔍 Loading post - Post data loaded:', postData);
+        console.log('🔍 Loading post - Is Global:', postData.isGlobal);
+        console.log('🔍 Loading post - Old Age Home:', postData.oldAgeHome);
+        console.log('🔍 Loading post - Created By:', postData.createdBy);
         
         const postContainer = document.getElementById('postContainer');
-        postContainer.innerHTML = `
-          <div style="margin-bottom: 20px;">
-            <button class="btn" onclick="history.back()">← Back to Forum</button>
-            ${canDeletePost(postData) ? `<button class="btn danger" onclick="deletePost()" style="margin-left: 10px;">Delete Post</button>` : ''}
-          </div>
-          <h1 class="h1">${postData.title}</h1>
-          <div style="color: #666; font-size: 14px; margin-bottom: 20px;">
-            By ${postData.createdBy.name} (${postData.createdBy.role}) in ${postData.oldAgeHome.name} • 
-            ${new Date(postData.createdAt).toLocaleDateString()} at ${new Date(postData.createdAt).toLocaleTimeString()}
-          </div>
-          <div style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">${postData.content}</div>
-        `;
+        
+        // Very simple HTML construction
+        var postHtml = '<div style="margin-bottom: 20px;">';
+        postHtml += '<button class="btn" onclick="history.back()">← Back to Forum</button>';
+        
+        if (canDeletePost(postData)) {
+          postHtml += '<button class="btn danger" onclick="deletePost()" style="margin-left: 10px;">Delete Post</button>';
+        }
+        
+        postHtml += '</div>';
+        postHtml += '<h1 class="h1">' + (postData.title || 'Untitled') + '</h1>';
+        postHtml += '<div style="color: #666; font-size: 14px; margin-bottom: 20px;">';
+        
+        // Handle global posts vs regular posts
+        if (postData.isGlobal) {
+          postHtml += '🌍 Global Announcement';
+        } else if (postData.oldAgeHome && postData.oldAgeHome.name) {
+          postHtml += 'in ' + postData.oldAgeHome.name;
+        } else {
+          postHtml += 'in Unknown Home';
+        }
+        
+        postHtml += ' • By ';
+        
+        // Handle created by safely
+        if (postData.createdBy && postData.createdBy.name) {
+          postHtml += postData.createdBy.name + ' (' + (postData.createdBy.role || 'Unknown') + ')';
+        } else {
+          postHtml += 'Unknown (Unknown)';
+        }
+        
+        postHtml += ' • ' + new Date(postData.createdAt).toLocaleDateString();
+        postHtml += ' at ' + new Date(postData.createdAt).toLocaleTimeString();
+        postHtml += '</div>';
+        postHtml += '<div style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">' + (postData.content || 'No content') + '</div>';
+        
+        postContainer.innerHTML = postHtml;
+        console.log('✅ Post rendered successfully');
       } catch (error) {
         console.error('Failed to load post:', error);
         document.getElementById('postContainer').innerHTML = '<p style="color: red;">Failed to load post</p>';
@@ -119,24 +167,48 @@
     // Load comments
     async function loadComments() {
       try {
-        const response = await api(`/api/comment/${postId}`);
+        console.log('🔍 Loading comments - Calling API with postId:', postId);
+        const response = await api('/api/comment/' + postId);
+        console.log('🔍 Loading comments - API response:', response);
+        
+        if (!response.comments) {
+          console.log('❌ Loading comments - No comments in response');
+          throw new Error('Comments not found in response');
+        }
+        
         const comments = response.comments;
+        console.log('🔍 Loading comments - Comments data loaded:', comments);
         
         const commentsList = document.getElementById('commentsList');
         
         if (comments.length === 0) {
           commentsList.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
         } else {
-          commentsList.innerHTML = comments.map(comment => `
-            <div class="panel" style="margin-bottom: 10px; padding: 10px;">
-              <div style="color: #666; font-size: 12px; margin-bottom: 5px;">
-                ${comment.userId.name} • ${new Date(comment.createdAt).toLocaleDateString()} at ${new Date(comment.createdAt).toLocaleTimeString()}
-              </div>
-              <div style="white-space: pre-wrap;">${comment.commentText}</div>
-              ${canDeleteComment(comment) ? `<button class="btn danger" onclick="deleteComment('${comment._id}')" style="margin-top: 5px; font-size: 12px;">Delete</button>` : ''}
-            </div>
-          `).join('');
+          var commentsHtml = '';
+          for (var i = 0; i < comments.length; i++) {
+            var comment = comments[i];
+            var userName = (comment.userId && comment.userId.name) || 'Unknown';
+            var commentText = comment.commentText || 'No comment text';
+            var dateStr = new Date(comment.createdAt).toLocaleDateString();
+            var timeStr = new Date(comment.createdAt).toLocaleTimeString();
+            var canDelete = canDeleteComment(comment);
+            
+            commentsHtml += '<div class="panel" style="margin-bottom: 10px; padding: 10px;">';
+            commentsHtml += '<div style="color: #666; font-size: 12px; margin-bottom: 5px;">';
+            commentsHtml += userName + ' • ' + dateStr + ' at ' + timeStr;
+            commentsHtml += '</div>';
+            commentsHtml += '<div style="white-space: pre-wrap;">' + commentText + '</div>';
+            
+            if (canDelete) {
+              commentsHtml += '<button class="btn danger" onclick="deleteComment(\'' + comment._id + '\')" style="margin-top: 5px; font-size: 12px;">Delete</button>';
+            }
+            
+            commentsHtml += '</div>';
+          }
+          
+          commentsList.innerHTML = commentsHtml;
         }
+        console.log('✅ Comments rendered successfully');
       } catch (error) {
         console.error('Failed to load comments:', error);
         document.getElementById('commentsList').innerHTML = '<p style="color: red;">Failed to load comments</p>';
@@ -151,22 +223,28 @@
       addCommentBtn.addEventListener('click', async () => {
         const text = commentText.value.trim();
         
+        console.log('🔍 Adding comment - Text:', text);
+        console.log('🔍 Adding comment - Post ID:', postId);
+        
         if (!text) {
           toast('Please enter a comment');
           return;
         }
         
         try {
+          console.log('🔍 Adding comment - Calling API...');
           const response = await api('/api/comment/add', {
             method: 'POST',
             body: JSON.stringify({ commentText: text, postId })
           });
           
+          console.log('🔍 Adding comment - API response:', response);
           toast('Comment added successfully!');
           commentText.value = '';
           await loadComments();
           
         } catch (error) {
+          console.log('❌ Adding comment - Error:', error);
           toast('Failed to add comment: ' + error.message);
         }
       });
@@ -175,18 +253,18 @@
     // Check if user can delete post
     function canDeletePost(post) {
       if (currentUser.role === 'superadmin') return true;
-      if (currentUser.role === 'admin' && currentUser.homeId.some(h => h._id === post.oldAgeHome._id)) return true;
+      if (currentUser.role === 'admin' && post.oldAgeHome && currentUser.homeId && currentUser.homeId.some(h => h._id === post.oldAgeHome._id)) return true;
       return false;
     }
 
     // Check if user can delete comment
     function canDeleteComment(comment) {
       // User can delete their own comment
-      if (comment.userId._id === currentUser._id) return true;
+      if (comment.userId && comment.userId._id === currentUser._id) return true;
       
       // Admin and Super Admin can delete comments from their home
       if (currentUser.role === 'superadmin') return true;
-      if (currentUser.role === 'admin' && currentUser.homeId.some(h => h._id === postData.oldAgeHome._id)) return true;
+      if (currentUser.role === 'admin' && postData.oldAgeHome && currentUser.homeId && currentUser.homeId.some(h => h._id === postData.oldAgeHome._id)) return true;
       
       return false;
     }

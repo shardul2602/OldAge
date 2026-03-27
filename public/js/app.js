@@ -5,11 +5,24 @@ function $all(s, root=document){return [...root.querySelectorAll(s)]}
 async function api(url, options = {}) {
   const opts = { headers: {}, ...options };
   const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
-  console.log('API called:', url, 'User exists:', !!user); // Debug
+  console.log('🔍 API Debug - URL:', url); 
+  console.log('🔍 API Debug - User exists:', !!user);
+  console.log('🔍 API Debug - User ID:', user?._id);
+  console.log('🔍 API Debug - User Role:', user?.role);
   
   if (user && user._id) {
     opts.headers['x-user-id'] = user._id;
+    console.log('🔍 API Debug - Headers being sent:', opts.headers);
     
+    // Add selected home filter for volunteers
+    if (user.role === 'volunteer') {
+      const selectedHome = localStorage.getItem('selectedHome');
+      if (selectedHome) {
+        opts.headers['x-selected-home'] = selectedHome;
+      }
+    }
+  } else {
+    console.log('❌ API Debug - No user found in localStorage');
   }
   
   console.log('Final headers being sent:', opts.headers); // Debug
@@ -18,11 +31,18 @@ async function api(url, options = {}) {
     opts.headers['Content-Type'] = 'application/json';
   }
   const res = await fetch(url, opts);
+  console.log('🔍 API Debug - Response status:', res.status);
+  console.log('🔍 API Debug - Response ok:', res.ok);
+  
   if (!res.ok) {
     const err = await res.text();
+    console.log('🔍 API Debug - Error response:', err);
     throw new Error(err || 'Request failed');
   }
-  return await res.json();
+  
+  const data = await res.json();
+  console.log('🔍 API Debug - Success response:', data);
+  return data;
 }
 
 function toast(msg) {
@@ -101,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const roleLabel = (user.role || 'volunteer').toUpperCase();
     // Handle multiple homes
     let homeDisplay = 'Unknown';
+    let homeSelector = '';
     
     console.log('User data:', { role: user.role, homeId: user.homeId, isArray: Array.isArray(user.homeId) }); // Debug
     
@@ -108,6 +129,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (Array.isArray(user.homeId)) {
         // Show count if homes aren't populated
         homeDisplay = `${user.homeId.length} home(s) assigned`;
+        
+        // Add home selector for volunteers with multiple homes
+        if (user.role === 'volunteer' && user.homeId.length > 1) {
+          console.log('Creating home selector for', user.homeId.length, 'homes'); // Debug
+          homeSelector = `
+            <select id="homeSelector" style="margin-top: 8px; padding: 6px; font-size: 12px; background: white; border: 1px solid #ccc; width: 100%;">
+              <option value="">Select Home</option>
+            </select>
+          `;
+        }
         
         // Try to fetch home names for better display
         fetch('/api/homes')
@@ -123,6 +154,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userHomes.length > 0) {
               const homeNames = userHomes.map(h => h.name);
               homeDisplay = homeNames.join(', ');
+              
+              // Update selector with actual names
+              if (user.role === 'volunteer' && userHomes.length > 1) {
+                const selector = document.getElementById('homeSelector');
+                if (selector) {
+                  let options = '<option value="">Select Home</option>';
+                  userHomes.forEach(home => {
+                    options += `<option value="${home._id}">${home.name}</option>`;
+                  });
+                  selector.innerHTML = options;
+                }
+              }
             }
           })
           .catch(err => {
@@ -136,17 +179,38 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     menu.innerHTML = `
-      <div style="padding:8px 10px" class="h2">Signed in as<br><strong>${user.name||user.email||'User'}</strong> <span class="role-badge">${roleLabel}</span><br><small>Home(s): ${homeDisplay}</small></div>
+      <div style="padding:8px 10px" class="h2">Signed in as<br><strong>${user.name||user.email||'User'}</strong> <span class="role-badge">${roleLabel}</span><br><small>Home(s): ${homeDisplay}</small>${homeSelector}</div>
       <a href="#" id="copyUserId">Copy ID</a>
       <a href="#" id="logoutLink">Logout</a>
     `;
     
-    // Show admin link only to admins
-    if (adminLink && user.role === 'admin') {
+    // Show admin link only to admins and superadmins
+    if (adminLink && ['admin', 'superadmin'].includes(user.role)) {
       adminLink.style.display = 'block';
     }
     const copyBtn = document.getElementById('copyUserId');
     const logoutLink = document.getElementById('logoutLink');
+    const selectorElement = document.getElementById('homeSelector');
+    
+    // Home selector event listener for volunteers
+    if (selectorElement && user.role === 'volunteer') {
+      selectorElement.addEventListener('change', (e) => {
+        const selectedHomeId = e.target.value;
+        localStorage.setItem('selectedHome', selectedHomeId);
+        
+        // Reload page to apply filter
+        if (window.location.pathname.includes('residents.html') || 
+            window.location.pathname.includes('visits.html')) {
+          window.location.reload();
+        }
+      });
+      
+      // Restore selected home
+      const selectedHome = localStorage.getItem('selectedHome');
+      if (selectedHome) {
+        selectorElement.value = selectedHome;
+      }
+    }
     
     copyBtn?.addEventListener('click', (ev)=>{
       ev.preventDefault();
@@ -165,6 +229,16 @@ document.addEventListener('DOMContentLoaded', () => {
       adminLink.style.display = 'none';
     } else {
       adminLink.style.display = '';
+    }
+  }
+  
+  // Hide Community Forum link for volunteers
+  const forumLink = document.querySelector('a[href="/forum.html"]');
+  if(forumLink){
+    if(!user || user.role === 'volunteer'){
+      forumLink.style.display = 'none';
+    } else {
+      forumLink.style.display = '';
     }
   }
 });

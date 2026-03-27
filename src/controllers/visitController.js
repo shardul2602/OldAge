@@ -17,7 +17,18 @@ async function createVisit(req, res) {
 // List visits (optionally by volunteer id)
 async function listVisits(req, res) {
   try {
-    const filter = { homeId: { $in: req.homeIds } };
+    let filter = {};
+    
+    // Role-based filtering
+    if (req.user.role === 'admin') {
+      // Admin sees only their home's visits
+      filter.homeId = { $in: req.homeIds };
+    } else if (req.user.role === 'volunteer') {
+      // Volunteer sees visits from their assigned homes
+      filter.homeId = { $in: req.homeIds };
+    }
+    // Superadmin sees all visits (no filter)
+    
     if (req.query.volunteer) filter.volunteer = req.query.volunteer;
     if (req.query.resident) filter.resident = req.query.resident;
     const visits = await Visit.find(filter)

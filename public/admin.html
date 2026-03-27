@@ -176,21 +176,45 @@
     
     // Create new home (Super Admin only)
     document.getElementById('createHomeBtn')?.addEventListener('click', async () => {
+      console.log('🏠 Home creation button clicked');
+      
       const name = document.getElementById('newHomeName').value.trim();
       const address = document.getElementById('newHomeAddress').value.trim();
       const contact = document.getElementById('newHomeContact').value.trim();
+      
+      console.log('🏠 Form data:', { name, address, contact });
       
       if (!name) {
         toast('Please enter home name');
         return;
       }
       
+      // SIMPLE TEST: Direct fetch without api() function
       try {
-        await api('/api/homes', {
+        console.log('🏠 Testing direct fetch...');
+        const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        console.log('🏠 Direct test - User:', user);
+        
+        const response = await fetch('/api/homes', {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user._id
+          },
           body: JSON.stringify({ name, address, contact })
         });
         
+        console.log('🏠 Direct test - Response status:', response.status);
+        console.log('🏠 Direct test - Response ok:', response.ok);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log('🏠 Direct test - Error:', errorText);
+          throw new Error(errorText);
+        }
+        
+        const result = await response.json();
+        console.log('🏠 Direct test - Success:', result);
         toast('Home created successfully!');
         
         // Clear form
@@ -200,7 +224,9 @@
         
         // Reload homes
         loadHomes();
+        
       } catch (error) {
+        console.log('🏠 Direct test - Caught error:', error);
         toast('Failed to create home: ' + error.message);
       }
     });

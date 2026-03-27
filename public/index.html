@@ -154,6 +154,12 @@
       const impactSub = document.getElementById('impactSub');
       const roleBasedContent = document.getElementById('roleBasedContent');
       
+      // Hide Community Forum link for volunteers
+      const forumLink = document.querySelector('a[href="/forum.html"]');
+      if (currentUser.role === 'volunteer' && forumLink) {
+        forumLink.style.display = 'none';
+      }
+      
       if (currentUser._id) {
         if (currentUser.role === 'superadmin') {
           // Super Admin - Central Dashboard
@@ -196,15 +202,17 @@
           impactSub.textContent = 'Make a difference in elders\' lives through your service';
           
           roleBasedContent.innerHTML = `
-            <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
-              <button class="btn primary" onclick="window.location.href='/residents.html'">View Residents</button>
-              <button class="btn primary" onclick="window.location.href='/volunteer.html'">Schedule Visits</button>
-              <button class="btn primary" onclick="window.location.href='/donations.html'">View Donations</button>
-              <button class="btn primary" onclick="window.location.href='/gallery.html'">View Gallery</button>
-              <button class="btn primary" onclick="window.location.href='/forum.html'">Community Forum</button>
+            <div class="panel">
+              <h1 class="h1 font-display">Volunteer Dashboard</h1>
+              <p style="margin-bottom: 20px;">Manage your volunteer activities and schedule visits.</p>
+              <div class="grid cols-2" style="gap: 12px;">
+                <button class="btn primary" onclick="window.location.href='/volunteer.html'">Schedule Visits</button>
+                <button class="btn primary" onclick="window.location.href='/donations.html'">View Donations</button>
+                <button class="btn primary" onclick="window.location.href='/gallery.html'">View Gallery</button>
+              </div>
             </div>
             <p style="margin-top: 10px; font-size: 14px; color: #666;">
-              💡 Select a home from the dropdown menu to view residents and schedule visits
+              Select a home from the dropdown menu to view residents and schedule visits
             </p>
           `;
         }
